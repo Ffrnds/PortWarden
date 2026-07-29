@@ -20,8 +20,17 @@ describe('Port Manager API (e2e)', () => {
     ]);
 
     try {
+      // Data can arrive in fragments — wait for a full line (the newline
+      // console.log appends), not just the first digit(s) to show up.
       const port = await new Promise((resolve) => {
-        child.stdout.once('data', (data) => resolve(Number(data.toString().trim())));
+        let buffer = '';
+        child.stdout.on('data', (chunk) => {
+          buffer += chunk.toString();
+          const match = buffer.match(/(\d+)\r?\n/);
+          if (match) {
+            resolve(Number(match[1]));
+          }
+        });
       });
 
       const listResponse = await request(app).get('/api/ports');

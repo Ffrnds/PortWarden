@@ -16,6 +16,14 @@ if (process.env.PORT_MANAGER_E2E === '1') {
   app.commandLine.appendSwitch('remote-debugging-port', '0');
 }
 
+// Without this, Windows shows the generic "Electron" name/grouping in the
+// taskbar (and package.json's "name": "desktop" as a fallback) instead of
+// the actual product name.
+app.setName('PortPulse');
+if (process.platform === 'win32') {
+  app.setAppUserModelId('com.portpulse.app');
+}
+
 let mainWindow = null;
 let apiHandle = null;
 let webHandle = null;
@@ -66,11 +74,13 @@ async function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 360,
     height: 480,
+    minWidth: 300,
+    minHeight: 320,
     alwaysOnTop: true,
     frame: false,
     transparent: true,
     backgroundColor: '#00000000',
-    resizable: false,
+    resizable: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

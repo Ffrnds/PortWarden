@@ -16,7 +16,20 @@
       <div class="widget__header">
         <img src="assets/logo.svg" alt="" width="26" height="26" />
         <span class="widget__title">PORTPULSE</span>
-        <button id="hide-button" class="widget__hide" title="Esconder">&mdash;</button>
+        <button id="filter-button" class="widget__icon-btn" title="Filtrar portas">&#9776;</button>
+        <button id="hide-button" class="widget__icon-btn" title="Esconder">&mdash;</button>
+      </div>
+
+      <div id="filter-panel" class="filter-panel" hidden>
+        <label class="filter-toggle">
+          <input type="checkbox" id="hide-system-toggle" />
+          Ocultar portas de sistema
+        </label>
+        <div class="filter-hidden-section">
+          <div class="filter-hidden-title">Ocultas manualmente</div>
+          <ul id="hidden-ports-list" class="hidden-ports-list"></ul>
+          <p id="no-hidden-ports" class="empty-state">Nenhuma porta oculta.</p>
+        </div>
       </div>
 
       <div id="error-banner" class="error-banner" hidden></div>

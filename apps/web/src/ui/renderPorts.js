@@ -6,7 +6,7 @@ export function formatPortCountLabel(count) {
   return `${count} ${count === 1 ? 'porta ativa' : 'portas ativas'}`;
 }
 
-export function buildPortRow(port, isProtected, { onKill, onProtect }) {
+export function buildPortRow(port, isProtected, { onKill, onProtect, onHide }) {
   const row = document.createElement('li');
   row.className = 'port-row' + (isProtected ? ' protected' : '');
   row.dataset.portKey = portKey(port);
@@ -30,12 +30,18 @@ export function buildPortRow(port, isProtected, { onKill, onProtect }) {
 
   info.append(number, processLine);
 
+  const hideButton = document.createElement('button');
+  hideButton.className = 'row-hide-btn';
+  hideButton.title = 'Ocultar da lista';
+  hideButton.textContent = '×';
+  hideButton.addEventListener('click', () => onHide(port));
+
   const killButton = document.createElement('button');
   killButton.className = 'kill-btn';
   killButton.textContent = 'Encerrar';
   killButton.addEventListener('click', () => onKill(port, row));
 
-  row.append(dot, info, killButton);
+  row.append(dot, info, hideButton, killButton);
   return row;
 }
 
