@@ -18,6 +18,8 @@ pra ficar testável sem depender de Windows/rede/banco real nos testes de unidad
 | E2E do desktop | Playwright | Suporta Electron nativamente |
 | Observabilidade | **Local por enquanto** | Grafana Cloud fica pra uma fase futura — o gateway já foi desenhado pra essa troca ser indolor |
 | Docker | Não é dependência do core | Só entraria se decidirmos hospedar Prometheus/Loki/Grafana localmente, o que não é o plano agora |
+| Persistência de portas protegidas | `PortProtectionRepositoryPort` (nova outbound port) | Faltava no desenho original; `PortProtectionPolicy` é imutável de propósito, então a config do usuário precisa de uma Port própria pra persistir |
+| Portas protegidas em runtime | `KillPortUseCase` monta a `PortProtectionPolicy` a cada `execute()`, lendo do repository | Sem isso, proteger uma porta via `ProtectPortUseCase` só valeria depois de reiniciar o processo |
 
 ## Monorepo
 
@@ -59,19 +61,21 @@ apps/api/src/
 │       │   ├── PortInspectorPort.js
 │       │   ├── ProcessTerminatorPort.js
 │       │   ├── PortHistoryRepositoryPort.js
+│       │   ├── PortProtectionRepositoryPort.js  <- persiste as portas protegidas configuradas pelo usuário
 │       │   ├── NotifierPort.js
 │       │   └── ObservabilityGatewayPort.js
 │       └── inbound/                   <- o que o mundo de fora PODE pedir
 │           ├── ListPortsPort.js
 │           ├── KillPortPort.js
-│           └── GetPortHistoryPort.js
+│           ├── GetPortHistoryPort.js
+│           └── ProtectPortPort.js
 │
 ├── application/                     <- orquestra, nunca decide regra de negócio
 │   ├── use-cases/
 │   │   ├── ListPortsUseCase.js        <- implementa ListPortsPort
 │   │   ├── KillPortUseCase.js         <- implementa KillPortPort
-│   │   ├── GetPortHistoryUseCase.js
-│   │   └── ProtectPortUseCase.js
+│   │   ├── GetPortHistoryUseCase.js   <- implementa GetPortHistoryPort
+│   │   └── ProtectPortUseCase.js      <- implementa ProtectPortPort
 │   ├── dto/
 │   │   ├── PortDTO.js                  <- forma que sai pra fora (não é a entidade)
 │   │   └── KillPortRequestDTO.js
@@ -120,7 +124,7 @@ apps/api/src/
 | Domain Service | Regra de negócio que não pertence a uma entidade só | `PortProtectionPolicy` |
 | Domain Event | Algo que aconteceu e outras partes podem reagir | `ProcessTerminatedEvent` |
 | Domain Exception | Erro de regra de negócio, tipado (não é `Error` genérico) | `ProtectedPortError`, `InsufficientPrivilegeError` |
-| Repository | Finge ser uma coleção do domínio (`save`, `findAll`) | `PortHistoryRepositoryPort` |
+| Repository | Finge ser uma coleção do domínio (`save`, `findAll`) | `PortHistoryRepositoryPort`, `PortProtectionRepositoryPort` |
 | Gateway | Espelha a API de um sistema externo de verdade | `ObservabilityGatewayPort` |
 
 ## Fluxo de uma requisição: matar uma porta
@@ -132,7 +136,9 @@ apps/api/src/
 4. KillPortUseCase:
    a. Pergunta pro PortInspectorPort quem está usando a porta
    b. Confere a trava fixa (PID 0/4 nunca pode) — não configurável
-   c. Confere PortProtectionPolicy (portas protegidas configuráveis pelo usuário)
+   c. Lê o PortProtectionRepositoryPort e monta uma PortProtectionPolicy fresca a cada
+      chamada (assim, proteger uma porta via ProtectPortUseCase vale sem reiniciar o
+      processo) — confere se a porta está protegida
    d. Se passou nas duas: chama ProcessTerminatorPort.kill(pid)
    e. Se o SO negar (sem privilégio): use case lança InsufficientPrivilegeError
    f. Se deu certo: dispara ProcessTerminatedEvent → grava histórico → registra log/métrica
