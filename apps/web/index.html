@@ -1,24 +1,35 @@
 <meta charset="utf-8" />
-<title>Port Manager</title>
+<title>PortPulse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link
+  href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap"
+  rel="stylesheet"
+/>
 <link rel="stylesheet" href="styles.css" />
 <body>
-  <header>
-    <h1>Port Manager</h1>
-    <button id="refresh-button" title="Refresh now">Refresh</button>
-  </header>
-  <div id="error-banner" class="error-banner" hidden></div>
-  <table id="ports-table">
-    <thead>
-      <tr>
-        <th>Port</th>
-        <th>Proto</th>
-        <th>PID</th>
-        <th>Process</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody id="ports-body"></tbody>
-  </table>
-  <p id="empty-state" hidden>No ports in use.</p>
+  <div class="widget">
+    <div class="widget-cosmos"></div>
+    <div class="widget-stars"></div>
+    <div class="widget-twinkle-field" id="twinkle-field"></div>
+
+    <div class="widget-content">
+      <div class="widget__header">
+        <img src="assets/logo.svg" alt="" width="26" height="26" />
+        <span class="widget__title">PORTPULSE</span>
+        <button id="hide-button" class="widget__hide" title="Esconder">&mdash;</button>
+      </div>
+
+      <div id="error-banner" class="error-banner" hidden></div>
+
+      <ul id="ports-list" class="widget__list"></ul>
+      <p id="empty-state" class="empty-state" hidden>Nenhuma porta ativa.</p>
+
+      <div class="widget__footer">
+        <span id="port-count">0 portas ativas</span>
+        <span class="refresh" id="refresh-indicator"></span>
+      </div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>

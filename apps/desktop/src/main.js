@@ -40,9 +40,13 @@ async function createMainWindow() {
   apiHandle = await startEmbeddedApi();
 
   mainWindow = new BrowserWindow({
-    width: 420,
-    height: 600,
+    width: 360,
+    height: 480,
     alwaysOnTop: true,
+    frame: false,
+    transparent: true,
+    backgroundColor: '#00000000',
+    resizable: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
