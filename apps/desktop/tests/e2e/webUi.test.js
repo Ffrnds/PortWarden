@@ -26,23 +26,29 @@ test.describe('apps/web UI', () => {
     closeCompositionRoot();
   });
 
-  test('lists real ports from the API', async ({ page }) => {
+  function goto(page) {
     const filePath = path.join(__dirname, '../../../web/index.html');
-    await page.goto(`file://${filePath}?apiPort=${apiPort}`);
+    return page.goto(`file://${filePath}?apiPort=${apiPort}`);
+  }
 
-    await expect(page.locator('#ports-body tr').first()).toBeVisible({ timeout: 10000 });
+  test('lists real ports from the API', async ({ page }) => {
+    await goto(page);
+
+    await expect(page.locator('#ports-list .port-row').first()).toBeVisible({ timeout: 10000 });
     await expect(page.locator('#error-banner')).toBeHidden();
+    await expect(page.locator('#port-count')).toContainText('porta');
   });
 
-  test('protects a port via the UI', async ({ page }) => {
-    const filePath = path.join(__dirname, '../../../web/index.html');
-    await page.goto(`file://${filePath}?apiPort=${apiPort}`);
-    await expect(page.locator('#ports-body tr').first()).toBeVisible({ timeout: 10000 });
+  test('protects a port by clicking its dot', async ({ page }) => {
+    await goto(page);
+    const firstRow = page.locator('#ports-list .port-row').first();
+    await expect(firstRow).toBeVisible({ timeout: 10000 });
 
-    const firstRow = page.locator('#ports-body tr').first();
-    await firstRow.getByText('Protect').click();
+    await firstRow.locator('.port-dot').click();
 
     await expect(page.locator('#error-banner')).toBeHidden();
+    await expect(firstRow).toHaveClass(/protected/);
+    await expect(firstRow.locator('.port-dot')).toBeDisabled();
   });
 
   test('shows an error banner when the API is unreachable', async ({ page }) => {
