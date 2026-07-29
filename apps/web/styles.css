@@ -31,12 +31,15 @@ body {
   overflow: hidden;
   border: 1px solid rgba(53, 242, 255, 0.28);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
 .widget-cosmos {
   position: absolute;
   inset: 0;
   background: radial-gradient(ellipse at 30% 15%, var(--void-2) 0%, var(--void) 70%);
+  opacity: 0.62;
   z-index: 0;
 }
 
@@ -125,7 +128,7 @@ body {
   letter-spacing: 0.03em;
   flex: 1;
 }
-.widget__hide {
+.widget__icon-btn {
   -webkit-app-region: no-drag;
   width: 22px;
   height: 22px;
@@ -139,10 +142,72 @@ body {
   justify-content: center;
   font-size: 13px;
   line-height: 1;
+  flex-shrink: 0;
+  margin-left: 6px;
 }
-.widget__hide:hover {
+.widget__icon-btn:hover {
   border-color: var(--cyan);
   color: var(--cyan);
+}
+.widget__icon-btn.active {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  background: rgba(53, 242, 255, 0.12);
+}
+
+.filter-panel {
+  position: relative;
+  z-index: 2;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(5, 6, 13, 0.35);
+  font-size: 12px;
+}
+.filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--text);
+}
+.filter-hidden-section {
+  margin-top: 10px;
+}
+.filter-hidden-title {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 10px;
+  margin-bottom: 6px;
+}
+.hidden-ports-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 120px;
+  overflow-y: auto;
+}
+.hidden-port-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+  color: var(--muted);
+}
+.hidden-port-item .unhide-btn {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  border: 1px solid var(--cyan);
+  color: var(--cyan);
+  background: transparent;
+  border-radius: 999px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.hidden-port-item .unhide-btn:hover {
+  background: var(--cyan);
+  color: #05060d;
 }
 
 .widget__list {
@@ -211,6 +276,22 @@ body {
   text-overflow: ellipsis;
 }
 
+.row-hide-btn {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+.row-hide-btn:hover {
+  color: var(--text);
+}
+
 .kill-btn {
   font-family: 'Rajdhani', sans-serif;
   font-weight: 600;
@@ -232,17 +313,26 @@ body {
   box-shadow: 0 0 14px rgba(255, 51, 153, 0.55);
 }
 
-.port-row.falling {
-  animation: fall 0.6s ease forwards;
+/* Disintegrate effect: the row's real content fades out while a burst of
+   small shards flies off and dissolves, instead of the row just vanishing. */
+.port-row.disintegrating > *:not(.shard) {
+  transition: opacity 0.25s ease;
+  opacity: 0;
+  pointer-events: none;
 }
-@keyframes fall {
-  0% {
-    opacity: 1;
-    transform: translate(0, 0) scale(1);
-  }
-  100% {
+.shard {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 1px;
+  opacity: 1;
+  animation: shard-fly 0.8s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes shard-fly {
+  to {
+    transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0.2);
     opacity: 0;
-    transform: translate(40px, -30px) scale(0.3);
   }
 }
 
