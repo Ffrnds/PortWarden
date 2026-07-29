@@ -3,6 +3,7 @@ const { PortInspectorPort } = require('../../domain/ports/outbound/PortInspector
 const { ProcessTerminatorPort } = require('../../domain/ports/outbound/ProcessTerminatorPort');
 const { PortHistoryRepositoryPort } = require('../../domain/ports/outbound/PortHistoryRepositoryPort');
 const { ObservabilityGatewayPort } = require('../../domain/ports/outbound/ObservabilityGatewayPort');
+const { PortProtectionRepositoryPort } = require('../../domain/ports/outbound/PortProtectionRepositoryPort');
 const { PortProtectionPolicy } = require('../../domain/services/PortProtectionPolicy');
 const { ProcessTerminatedEvent } = require('../../domain/events/ProcessTerminatedEvent');
 const { ProtectedPortError } = require('../../domain/exceptions/ProtectedPortError');
@@ -13,11 +14,11 @@ const NEVER_KILLABLE_PIDS = [0, 4];
 class KillPortUseCase extends KillPortPort {
   #portInspector;
   #processTerminator;
-  #portProtectionPolicy;
+  #portProtectionRepository;
   #portHistoryRepository;
   #observabilityGateway;
 
-  constructor({ portInspector, processTerminator, portProtectionPolicy, portHistoryRepository, observabilityGateway }) {
+  constructor({ portInspector, processTerminator, portProtectionRepository, portHistoryRepository, observabilityGateway }) {
     super();
 
     if (!(portInspector instanceof PortInspectorPort)) {
@@ -26,8 +27,8 @@ class KillPortUseCase extends KillPortPort {
     if (!(processTerminator instanceof ProcessTerminatorPort)) {
       throw new Error('KillPortUseCase requires a ProcessTerminatorPort instance.');
     }
-    if (!(portProtectionPolicy instanceof PortProtectionPolicy)) {
-      throw new Error('KillPortUseCase requires a PortProtectionPolicy instance.');
+    if (!(portProtectionRepository instanceof PortProtectionRepositoryPort)) {
+      throw new Error('KillPortUseCase requires a PortProtectionRepositoryPort instance.');
     }
     if (!(portHistoryRepository instanceof PortHistoryRepositoryPort)) {
       throw new Error('KillPortUseCase requires a PortHistoryRepositoryPort instance.');
@@ -38,7 +39,7 @@ class KillPortUseCase extends KillPortPort {
 
     this.#portInspector = portInspector;
     this.#processTerminator = processTerminator;
-    this.#portProtectionPolicy = portProtectionPolicy;
+    this.#portProtectionRepository = portProtectionRepository;
     this.#portHistoryRepository = portHistoryRepository;
     this.#observabilityGateway = observabilityGateway;
   }
@@ -55,7 +56,10 @@ class KillPortUseCase extends KillPortPort {
       throw new ProtectedPortError(usage.portNumber);
     }
 
-    if (this.#portProtectionPolicy.isProtected(usage.portNumber)) {
+    const protectedPorts = await this.#portProtectionRepository.findAll();
+    const portProtectionPolicy = new PortProtectionPolicy(protectedPorts);
+
+    if (portProtectionPolicy.isProtected(usage.portNumber)) {
       throw new ProtectedPortError(usage.portNumber);
     }
 
