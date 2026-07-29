@@ -2,3 +2,7 @@ node_modules/
 dist/
 *.log
 .env
+*.sqlite
+/apps/desktop/data/
+/apps/desktop/test-results/
+/apps/desktop/playwright-report/
