@@ -1,5 +1,6 @@
 const { ListPortsPort } = require('../../domain/ports/inbound/ListPortsPort');
 const { PortInspectorPort } = require('../../domain/ports/outbound/PortInspectorPort');
+const { PortUsageAggregate } = require('../../domain/aggregates/PortUsageAggregate');
 
 class ListPortsUseCase extends ListPortsPort {
   #portInspector;
@@ -15,7 +16,19 @@ class ListPortsUseCase extends ListPortsPort {
   }
 
   async execute() {
-    return this.#portInspector.listActivePorts();
+    const usages = await this.#portInspector.listActivePorts();
+
+    // Routed through the aggregate so a misbehaving inspector (or a race
+    // between reading connections and reading process names) can never
+    // surface the same port/protocol/pid combination twice.
+    const aggregate = new PortUsageAggregate();
+    usages.forEach((usage) => {
+      if (!aggregate.findById(usage.id)) {
+        aggregate.add(usage);
+      }
+    });
+
+    return aggregate.list();
   }
 }
 
