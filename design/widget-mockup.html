@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>PortPulse — mockup do widget</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --void: #05060d;
+    --void-2: #0d1128;
+    --cyan: #35f2ff;
+    --magenta: #ff3399;
+    --amber: #ffb545;
+    --text: #eef1fb;
+    --muted: #7b83a3;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      repeating-conic-gradient(#d9dadf 0% 25%, #eceef2 0% 50%) 0 0 / 24px 24px;
+    font-family: 'Rajdhani', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 60px 20px;
+  }
+
+  .preview-note {
+    font-size: 12px;
+    color: #6b6f78;
+    max-width: 360px;
+    text-align: center;
+  }
+
+  /* ===================== O WIDGET (isto é o produto de verdade) ===================== */
+
+  .widget {
+    position: relative;
+    z-index: 2;
+    width: 360px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(53, 242, 255, 0.28);
+    box-shadow: 0 20px 50px rgba(0,0,0,.45);
+    color: var(--text);
+  }
+
+  .widget-cosmos {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 30% 15%, var(--void-2) 0%, var(--void) 70%);
+    z-index: 0;
+  }
+
+  .widget-stars, .widget-stars::after {
+    content: "";
+    position: absolute;
+    inset: -30% -30%;
+    background-repeat: repeat;
+    background-image:
+      radial-gradient(1.3px 1.3px at 20px 30px, #fff, transparent),
+      radial-gradient(1.1px 1.1px at 90px 90px, #cfe, transparent),
+      radial-gradient(1.4px 1.4px at 140px 50px, #fff, transparent),
+      radial-gradient(1px 1px at 180px 140px, #bcf, transparent),
+      radial-gradient(1.2px 1.2px at 230px 30px, #fff, transparent),
+      radial-gradient(1.3px 1.3px at 30px 170px, #fff, transparent),
+      radial-gradient(1.1px 1.1px at 250px 190px, #cef, transparent);
+    background-size: 220px 220px;
+    opacity: .75;
+    z-index: 0;
+    animation: driftA 100s linear infinite;
+  }
+  .widget-stars::after {
+    background-position: 40px 60px;
+    opacity: .45;
+    animation: driftB 130s linear infinite;
+  }
+  @keyframes driftA { from { background-position: 0 0; } to { background-position: -220px 220px; } }
+  @keyframes driftB { from { background-position: 40px 60px; } to { background-position: -180px 280px; } }
+
+  .widget-twinkle-field { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+  .widget-twinkle {
+    position: absolute;
+    border-radius: 50%;
+    background: #fff;
+    animation-name: twinkle;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: infinite;
+  }
+  @keyframes twinkle { 0%, 100% { opacity: .15; } 50% { opacity: 1; } }
+
+  .widget-shooting-star {
+    position: absolute;
+    width: 46px; height: 2px;
+    background: linear-gradient(90deg, transparent, #fff);
+    border-radius: 2px;
+    opacity: 0;
+    z-index: 0;
+    animation-name: shoot;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+  @keyframes shoot {
+    0% { opacity: 0; transform: translate(0,0) rotate(-22deg); }
+    3% { opacity: 1; }
+    14% { opacity: 0; transform: translate(150px,80px) rotate(-22deg); }
+    100% { opacity: 0; transform: translate(150px,80px) rotate(-22deg); }
+  }
+
+  .widget-content { position: relative; z-index: 1; }
+
+  .widget__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .widget__header svg { width: 26px; height: 26px; flex-shrink: 0; }
+  .widget__title {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: .03em;
+    flex: 1;
+  }
+  .widget__hide {
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    line-height: 1;
+  }
+  .widget__hide:hover { border-color: var(--cyan); color: var(--cyan); }
+
+  .widget__list { list-style: none; margin: 0; padding: 6px 0; }
+
+  .port-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    transition: opacity .5s ease, transform .5s ease;
+  }
+  .port-row + .port-row { border-top: 1px solid rgba(255,255,255,0.05); }
+
+  .port-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 8px 2px rgba(53,242,255,.7);
+    animation: dotpulse 2.4s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  .port-row.protected .port-dot {
+    background: var(--amber);
+    box-shadow: 0 0 8px 2px rgba(255,181,69,.7);
+  }
+  @keyframes dotpulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+
+  .port-info { flex: 1; min-width: 0; }
+  .port-number {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 15px;
+    color: var(--cyan);
+    font-weight: 700;
+  }
+  .port-process { font-size: 12px; color: var(--muted); letter-spacing: .02em; }
+
+  .kill-btn {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--magenta);
+    background: transparent;
+    color: var(--magenta);
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease, box-shadow .15s ease;
+    flex-shrink: 0;
+  }
+  .kill-btn:hover {
+    background: var(--magenta);
+    color: #1a0210;
+    box-shadow: 0 0 14px rgba(255,51,153,.55);
+  }
+
+  .port-row.falling { animation: fall .6s ease forwards; }
+  @keyframes fall {
+    0% { opacity: 1; transform: translate(0,0) scale(1); }
+    100% { opacity: 0; transform: translate(40px,-30px) scale(.3); }
+  }
+
+  .widget__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .widget__footer .refresh {
+    width: 14px; height: 14px;
+    border: 1px solid var(--muted);
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .port-dot, .widget-twinkle, .widget-stars, .widget-stars::after, .widget-shooting-star { animation: none !important; }
+    .widget-twinkle { opacity: .7; }
+    .port-row.falling { animation: none; opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="widget">
+  <div class="widget-cosmos"></div>
+  <div class="widget-stars"></div>
+  <div class="widget-twinkle-field" id="twinkleField"></div>
+  <div class="widget-shooting-star" style="top:10%; left:8%; animation-duration:8s; animation-delay:.5s;"></div>
+  <div class="widget-shooting-star" style="top:55%; left:60%; animation-duration:11s; animation-delay:4s;"></div>
+
+  <div class="widget-content">
+    <div class="widget__header">
+      <svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="hg2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#35f2ff"/><stop offset="100%" stop-color="#ff3399"/>
+          </linearGradient>
+        </defs>
+        <path d="M120,65 L167.6,92.5 L167.6,147.5 L120,175 L72.4,147.5 L72.4,92.5 Z" fill="#0a0e1c" stroke="url(#hg2)" stroke-width="8"/>
+        <circle cx="120" cy="120" r="16" fill="#35f2ff"/>
+      </svg>
+      <span class="widget__title">PORTPULSE</span>
+      <button class="widget__hide" title="Esconder">—</button>
+    </div>
+
+    <ul class="widget__list">
+      <li class="port-row">
+        <span class="port-dot"></span>
+        <span class="port-info">
+          <div class="port-number">3000</div>
+          <div class="port-process">node · dev-server</div>
+        </span>
+        <button class="kill-btn" onclick="killRow(this)">Encerrar</button>
+      </li>
+      <li class="port-row">
+        <span class="port-dot"></span>
+        <span class="port-info">
+          <div class="port-number">5173</div>
+          <div class="port-process">node · vite</div>
+        </span>
+        <button class="kill-btn" onclick="killRow(this)">Encerrar</button>
+      </li>
+      <li class="port-row protected">
+        <span class="port-dot"></span>
+        <span class="port-info">
+          <div class="port-number">5432</div>
+          <div class="port-process">postgres · protegida</div>
+        </span>
+        <button class="kill-btn" onclick="killRow(this)">Encerrar</button>
+      </li>
+      <li class="port-row">
+        <span class="port-dot"></span>
+        <span class="port-info">
+          <div class="port-number">8080</div>
+          <div class="port-process">java · tomcat</div>
+        </span>
+        <button class="kill-btn" onclick="killRow(this)">Encerrar</button>
+      </li>
+    </ul>
+
+    <div class="widget__footer">
+      <span>4 portas ativas</span>
+      <span class="refresh"></span>
+    </div>
+  </div>
+</div>
+
+<p class="preview-note">O xadrez cinza ao redor é só pra você enxergar os cantos do widget — na vida real ali é transparente, mostrando sua área de trabalho de verdade.</p>
+
+<script>
+  function killRow(btn) {
+    const row = btn.closest('.port-row');
+    row.classList.add('falling');
+    row.addEventListener('animationend', () => row.remove(), { once: true });
+  }
+
+  (function buildTwinkleField() {
+    const field = document.getElementById('twinkleField');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const count = 40;
+    const parts = [];
+    for (let i = 0; i < count; i++) {
+      const top = (Math.random() * 100).toFixed(1);
+      const left = (Math.random() * 100).toFixed(1);
+      const size = (Math.random() * 1.6 + 1).toFixed(1);
+      const duration = (Math.random() * 2.5 + 2.2).toFixed(1);
+      const delay = (Math.random() * 5).toFixed(1);
+      const style = 'top:' + top + '%; left:' + left + '%; width:' + size + 'px; height:' + size + 'px;' +
+        (reduceMotion ? 'opacity:.6;' : 'animation-duration:' + duration + 's; animation-delay:' + delay + 's;');
+      parts.push('<span class="widget-twinkle" style="' + style + '"></span>');
+    }
+    field.innerHTML = parts.join('');
+  })();
+</script>
+
+</body>
+</html>

@@ -26,9 +26,11 @@ pra ficar testável sem depender de Windows/rede/banco real nos testes de unidad
 ```
 port-manager/
 ├── package.json          <- raiz, define os workspaces
+├── design/               <- mockups e referências visuais, não roda no app
 └── apps/
     ├── desktop/           <- Electron: janela sempre-no-topo, tray
     ├── web/               <- HTML/CSS/JS puro, renderizado dentro do Electron
+    │   └── assets/          <- logo e outros assets estáticos (SVG, ícones)
     └── api/               <- Express + arquitetura hexagonal (detalhe abaixo)
 ```
 

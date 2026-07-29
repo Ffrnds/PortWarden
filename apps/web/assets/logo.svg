@@ -1,0 +1,51 @@
+<svg width="240" height="240" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+  <title>PortPulse — logo</title>
+  <defs>
+    <linearGradient id="hexGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#35f2ff"/>
+      <stop offset="100%" stop-color="#ff3399"/>
+    </linearGradient>
+    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#35f2ff" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#35f2ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="starGlowCyan" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#35f2ff" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#35f2ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="starGlowMagenta" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ff3399" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#ff3399" stop-opacity="0"/>
+    </radialGradient>
+    <style>
+      .pulse-core { animation: pulseCore 2.6s ease-in-out infinite; transform-origin: 120px 120px; }
+      .pulse-star { animation: pulseStar 3.2s ease-in-out infinite; }
+      .pulse-star.d1 { animation-delay: .4s; }
+      .pulse-star.d2 { animation-delay: .9s; }
+      @keyframes pulseCore { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+      @keyframes pulseStar { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+      @media (prefers-reduced-motion: reduce) {
+        .pulse-core, .pulse-star { animation: none; }
+      }
+    </style>
+  </defs>
+
+  <line x1="120" y1="120" x2="120" y2="25" stroke="#35f2ff" stroke-width="1" stroke-opacity="0.55"/>
+  <line x1="120" y1="120" x2="202.3" y2="167.5" stroke="#ff3399" stroke-width="1" stroke-opacity="0.55"/>
+  <line x1="120" y1="120" x2="37.7" y2="167.5" stroke="#ff3399" stroke-width="1" stroke-opacity="0.55"/>
+
+  <path d="M120,65 L167.6,92.5 L167.6,147.5 L120,175 L72.4,147.5 L72.4,92.5 Z"
+        fill="#0a0e1c" stroke="url(#hexGrad)" stroke-width="3"/>
+
+  <circle cx="120" cy="120" r="18" fill="url(#coreGlow)"/>
+  <circle class="pulse-core" cx="120" cy="120" r="8" fill="#35f2ff"/>
+
+  <circle cx="120" cy="25" r="12" fill="url(#starGlowCyan)"/>
+  <circle class="pulse-star" cx="120" cy="25" r="5" fill="#35f2ff"/>
+
+  <circle cx="202.3" cy="167.5" r="12" fill="url(#starGlowMagenta)"/>
+  <circle class="pulse-star d1" cx="202.3" cy="167.5" r="5" fill="#ff3399"/>
+
+  <circle cx="37.7" cy="167.5" r="12" fill="url(#starGlowMagenta)"/>
+  <circle class="pulse-star d2" cx="37.7" cy="167.5" r="5" fill="#ff3399"/>
+</svg>
