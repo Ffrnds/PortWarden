@@ -23,13 +23,13 @@ test.fixme('opens an always-on-top window that loads the port list from the embe
 
   try {
     const window = await electronApp.firstWindow();
-    await window.waitForSelector('#app');
+    await window.waitForSelector('#ports-list .port-row', { timeout: 15000 });
 
     const isAlwaysOnTop = await electronApp.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isAlwaysOnTop());
     expect(isAlwaysOnTop).toBe(true);
 
-    await expect(window.locator('#app')).not.toHaveText('Loading…', { timeout: 10000 });
-    await expect(window.locator('#app')).toContainText('port(s) in use');
+    await expect(window.locator('#error-banner')).toBeHidden();
+    await expect(window.locator('#port-count')).toContainText('porta');
   } finally {
     await electronApp.close();
   }
@@ -43,7 +43,7 @@ test.fixme('closing the window hides it to the tray instead of quitting the app'
 
   try {
     const window = await electronApp.firstWindow();
-    await window.waitForSelector('#app');
+    await window.waitForSelector('#ports-list .port-row', { timeout: 15000 });
 
     await electronApp.evaluate(({ BrowserWindow }) => {
       BrowserWindow.getAllWindows()[0].close();

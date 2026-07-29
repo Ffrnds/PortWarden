@@ -1,4 +1,5 @@
 const path = require('node:path');
+const express = require('express');
 const { app, BrowserWindow, ipcMain } = require('electron');
 const { createApp } = require('../../api/src/server');
 const { createTray } = require('./tray');
@@ -17,6 +18,7 @@ if (process.env.PORT_MANAGER_E2E === '1') {
 
 let mainWindow = null;
 let apiHandle = null;
+let webHandle = null;
 let tray = null;
 let isQuitting = false;
 
@@ -36,8 +38,30 @@ async function startEmbeddedApi() {
   };
 }
 
+// apps/web uses native ES modules (<script type="module">), which Chromium
+// refuses to load over file:// (blocked as a cross-origin request). Serving
+// it over plain HTTP — from a second, separate static server, so apps/api
+// stays a clean REST API with no frontend-serving concern — sidesteps that
+// entirely.
+async function startWebServer() {
+  const staticApp = express();
+  staticApp.use(express.static(path.join(__dirname, '../../web')));
+
+  const httpServer = await new Promise((resolve) => {
+    const server = staticApp.listen(0, '127.0.0.1', () => resolve(server));
+  });
+
+  return {
+    port: httpServer.address().port,
+    stop() {
+      httpServer.close();
+    },
+  };
+}
+
 async function createMainWindow() {
   apiHandle = await startEmbeddedApi();
+  webHandle = await startWebServer();
 
   mainWindow = new BrowserWindow({
     width: 360,
@@ -54,9 +78,7 @@ async function createMainWindow() {
     },
   });
 
-  mainWindow.loadFile(path.join(__dirname, '../../web/index.html'), {
-    search: `apiPort=${apiHandle.port}`,
-  });
+  mainWindow.loadURL(`http://127.0.0.1:${webHandle.port}/index.html?apiPort=${apiHandle.port}`);
 
   // Clicking the X hides the window instead of closing the app — the tray
   // icon is what keeps Port Manager (and its embedded API) running.
@@ -92,6 +114,7 @@ app.on('window-all-closed', () => {
 app.on('before-quit', () => {
   isQuitting = true;
   apiHandle?.stop();
+  webHandle?.stop();
 });
 
 app.on('activate', () => {

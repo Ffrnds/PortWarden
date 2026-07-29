@@ -20,6 +20,7 @@ pra ficar testável sem depender de Windows/rede/banco real nos testes de unidad
 | Docker | Não é dependência do core | Só entraria se decidirmos hospedar Prometheus/Loki/Grafana localmente, o que não é o plano agora |
 | Persistência de portas protegidas | `PortProtectionRepositoryPort` (nova outbound port) | Faltava no desenho original; `PortProtectionPolicy` é imutável de propósito, então a config do usuário precisa de uma Port própria pra persistir |
 | Portas protegidas em runtime | `KillPortUseCase` monta a `PortProtectionPolicy` a cada `execute()`, lendo do repository | Sem isso, proteger uma porta via `ProtectPortUseCase` só valeria depois de reiniciar o processo |
+| `apps/web` servido por HTTP, não `file://` | `apps/desktop/src/main.js` sobe um segundo Express (só `express.static`), `loadURL()` em vez de `loadFile()` | Chromium bloqueia `<script type="module">` carregado via `file://` (CORS). Ficou fora de `apps/api` de propósito — a API continua uma REST API pura, sem virar servidor de frontend |
 
 ## Monorepo
 
@@ -28,9 +29,16 @@ port-manager/
 ├── package.json          <- raiz, define os workspaces
 ├── design/               <- mockups e referências visuais, não roda no app
 └── apps/
-    ├── desktop/           <- Electron: janela sempre-no-topo, tray
-    ├── web/               <- HTML/CSS/JS puro, renderizado dentro do Electron
-    │   └── assets/          <- logo e outros assets estáticos (SVG, ícones)
+    ├── desktop/           <- Electron: janela sempre-no-topo, tray, servidor estático de apps/web
+    ├── web/               <- HTML/CSS/ES modules, servido por HTTP (não file://) pelo desktop
+    │   ├── assets/          <- logo e outros assets estáticos (SVG, ícones)
+    │   ├── src/
+    │   │   ├── main.js        <- orquestração/wiring (equivalente ao server.js + composition-root da API)
+    │   │   ├── api/            <- fala com o backend via fetch() (equivalente a adapters/driven)
+    │   │   └── ui/             <- lógica pura de renderização/formatação, testável sem navegador
+    │   └── tests/
+    │       ├── unit/            <- Vitest + jsdom, sem rede real
+    │       └── e2e/             <- Playwright, navegador real + API real
     └── api/               <- Express + arquitetura hexagonal (detalhe abaixo)
 ```
 
