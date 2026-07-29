@@ -25,6 +25,7 @@ function buildApp(overrides = {}) {
     killPortUseCase: { execute: async () => new ProcessTerminatedEvent(buildUsage(), new Date('2026-07-29T12:00:00.000Z')) },
     getPortHistoryUseCase: { execute: async () => [] },
     protectPortUseCase: { execute: async () => {} },
+    listProtectedPortsUseCase: { execute: async () => [] },
     ...overrides,
   };
 
@@ -171,5 +172,18 @@ describe('PUT /api/protection/:port', () => {
     const response = await request(app).put('/api/protection/not-a-number');
 
     expect(response.status).toBe(400);
+  });
+});
+
+describe('GET /api/protection', () => {
+  it('returns the list of protected port numbers', async () => {
+    const app = buildApp({
+      listProtectedPortsUseCase: { execute: async () => [new PortNumber(5432), new PortNumber(6379)] },
+    });
+
+    const response = await request(app).get('/api/protection');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([5432, 6379]);
   });
 });

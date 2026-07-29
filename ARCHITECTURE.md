@@ -70,14 +70,16 @@ apps/api/src/
 │           ├── ListPortsPort.js
 │           ├── KillPortPort.js
 │           ├── GetPortHistoryPort.js
-│           └── ProtectPortPort.js
+│           ├── ProtectPortPort.js
+│           └── ListProtectedPortsPort.js
 │
 ├── application/                     <- orquestra, nunca decide regra de negócio
 │   ├── use-cases/
-│   │   ├── ListPortsUseCase.js        <- implementa ListPortsPort
-│   │   ├── KillPortUseCase.js         <- implementa KillPortPort
-│   │   ├── GetPortHistoryUseCase.js   <- implementa GetPortHistoryPort
-│   │   └── ProtectPortUseCase.js      <- implementa ProtectPortPort
+│   │   ├── ListPortsUseCase.js          <- implementa ListPortsPort
+│   │   ├── KillPortUseCase.js           <- implementa KillPortPort
+│   │   ├── GetPortHistoryUseCase.js     <- implementa GetPortHistoryPort
+│   │   ├── ProtectPortUseCase.js        <- implementa ProtectPortPort
+│   │   └── ListProtectedPortsUseCase.js <- implementa ListProtectedPortsPort
 │   ├── dto/
 │   │   ├── PortDTO.js                  <- forma que sai pra fora (não é a entidade)
 │   │   └── KillPortRequestDTO.js
