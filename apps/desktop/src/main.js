@@ -1,5 +1,5 @@
 const path = require('node:path');
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const { createApp } = require('../../api/src/server');
 const { createTray } = require('./tray');
 
@@ -74,6 +74,10 @@ async function createMainWindow() {
     },
   });
 }
+
+ipcMain.on('port-manager:hide-window', () => {
+  mainWindow?.hide();
+});
 
 app.whenReady().then(createMainWindow);
 
