@@ -2,7 +2,23 @@
 <title>Port Manager</title>
 <link rel="stylesheet" href="styles.css" />
 <body>
-  <h1>Port Manager</h1>
-  <div id="app">Loading…</div>
+  <header>
+    <h1>Port Manager</h1>
+    <button id="refresh-button" title="Refresh now">Refresh</button>
+  </header>
+  <div id="error-banner" class="error-banner" hidden></div>
+  <table id="ports-table">
+    <thead>
+      <tr>
+        <th>Port</th>
+        <th>Proto</th>
+        <th>PID</th>
+        <th>Process</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="ports-body"></tbody>
+  </table>
+  <p id="empty-state" hidden>No ports in use.</p>
   <script src="app.js"></script>
 </body>

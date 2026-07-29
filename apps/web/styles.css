@@ -2,4 +2,41 @@ body {
   font-family: system-ui, sans-serif;
   margin: 0;
   padding: 1rem;
+  font-size: 14px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+h1 {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.kill-button {
+  color: #b00020;
+}
+
+.error-banner {
+  background: #fdecea;
+  color: #b00020;
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin-bottom: 0.75rem;
 }
