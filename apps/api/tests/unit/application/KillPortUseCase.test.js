@@ -3,7 +3,7 @@ const { PortInspectorPort } = require('../../../src/domain/ports/outbound/PortIn
 const { ProcessTerminatorPort } = require('../../../src/domain/ports/outbound/ProcessTerminatorPort');
 const { PortHistoryRepositoryPort } = require('../../../src/domain/ports/outbound/PortHistoryRepositoryPort');
 const { ObservabilityGatewayPort } = require('../../../src/domain/ports/outbound/ObservabilityGatewayPort');
-const { PortProtectionPolicy } = require('../../../src/domain/services/PortProtectionPolicy');
+const { PortProtectionRepositoryPort } = require('../../../src/domain/ports/outbound/PortProtectionRepositoryPort');
 const { ProtectedPortError } = require('../../../src/domain/exceptions/ProtectedPortError');
 const { InsufficientPrivilegeError } = require('../../../src/domain/exceptions/InsufficientPrivilegeError');
 const { PortUsage } = require('../../../src/domain/entities/PortUsage');
@@ -63,6 +63,21 @@ class FakeObservabilityGatewayAdapter extends ObservabilityGatewayPort {
   }
 }
 
+class FakePortProtectionRepositoryAdapter extends PortProtectionRepositoryPort {
+  constructor(protectedPorts = []) {
+    super();
+    this.protectedPorts = protectedPorts;
+  }
+
+  async findAll() {
+    return this.protectedPorts;
+  }
+
+  async add(portNumber) {
+    this.protectedPorts.push(portNumber);
+  }
+}
+
 function buildPortUsage({ portNumber = 8080, pid = 1234, protocol = 'TCP', processName = 'node.exe' } = {}) {
   return new PortUsage({
     portNumber: new PortNumber(portNumber),
@@ -76,7 +91,7 @@ function buildUseCase(overrides = {}) {
   return new KillPortUseCase({
     portInspector: overrides.portInspector ?? new FakePortInspectorAdapter([buildPortUsage()]),
     processTerminator: overrides.processTerminator ?? new FakeProcessTerminatorAdapter(),
-    portProtectionPolicy: overrides.portProtectionPolicy ?? new PortProtectionPolicy(),
+    portProtectionRepository: overrides.portProtectionRepository ?? new FakePortProtectionRepositoryAdapter(),
     portHistoryRepository: overrides.portHistoryRepository ?? new FakePortHistoryRepositoryAdapter(),
     observabilityGateway: overrides.observabilityGateway ?? new FakeObservabilityGatewayAdapter(),
   });
@@ -119,15 +134,29 @@ describe('KillPortUseCase', () => {
     await expect(useCase.execute(request)).rejects.toThrow(ProtectedPortError);
   });
 
-  it('respects the configurable PortProtectionPolicy', async () => {
+  it('respects the configurable protected ports, read fresh from the repository', async () => {
     const processTerminator = new FakeProcessTerminatorAdapter();
     const useCase = buildUseCase({
       processTerminator,
-      portProtectionPolicy: new PortProtectionPolicy([new PortNumber(8080)]),
+      portProtectionRepository: new FakePortProtectionRepositoryAdapter([new PortNumber(8080)]),
     });
 
     await expect(useCase.execute(request)).rejects.toThrow(ProtectedPortError);
     expect(processTerminator.terminatedPids).toHaveLength(0);
+  });
+
+  it('picks up a port protected after the use case was built (no restart needed)', async () => {
+    const processTerminator = new FakeProcessTerminatorAdapter();
+    const portProtectionRepository = new FakePortProtectionRepositoryAdapter([]);
+    const useCase = buildUseCase({ processTerminator, portProtectionRepository });
+
+    await useCase.execute(request);
+    expect(processTerminator.terminatedPids).toHaveLength(1);
+
+    await portProtectionRepository.add(new PortNumber(8080));
+
+    await expect(useCase.execute(request)).rejects.toThrow(ProtectedPortError);
+    expect(processTerminator.terminatedPids).toHaveLength(1);
   });
 
   it('throws when no process is using the requested port/protocol', async () => {
