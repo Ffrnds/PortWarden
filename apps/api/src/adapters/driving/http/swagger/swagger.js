@@ -39,6 +39,12 @@ const openApiSpec = {
         responses: { 204: { description: 'Port protected' }, 400: { description: 'Invalid port' } },
       },
     },
+    '/api/protection': {
+      get: {
+        summary: 'List currently protected ports',
+        responses: { 200: { description: 'List of protected port numbers' } },
+      },
+    },
   },
 };
 

@@ -12,6 +12,7 @@ const { ListPortsUseCase } = require('../application/use-cases/ListPortsUseCase'
 const { KillPortUseCase } = require('../application/use-cases/KillPortUseCase');
 const { GetPortHistoryUseCase } = require('../application/use-cases/GetPortHistoryUseCase');
 const { ProtectPortUseCase } = require('../application/use-cases/ProtectPortUseCase');
+const { ListProtectedPortsUseCase } = require('../application/use-cases/ListProtectedPortsUseCase');
 
 // The single place in the whole codebase that knows about concrete adapters.
 // Everywhere else only ever sees Ports. Accepts a config override so tests
@@ -36,6 +37,7 @@ function buildCompositionRoot(config = env) {
     }),
     getPortHistoryUseCase: new GetPortHistoryUseCase(portHistoryRepository),
     protectPortUseCase: new ProtectPortUseCase(portProtectionRepository),
+    listProtectedPortsUseCase: new ListProtectedPortsUseCase(portProtectionRepository),
     close() {
       portHistoryRepository.close();
       portProtectionRepository.close();
