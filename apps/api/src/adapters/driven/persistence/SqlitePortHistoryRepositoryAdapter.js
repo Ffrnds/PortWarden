@@ -1,0 +1,63 @@
+const { DatabaseSync } = require('node:sqlite');
+const { PortHistoryRepositoryPort } = require('../../../domain/ports/outbound/PortHistoryRepositoryPort');
+const { ProcessTerminatedEvent } = require('../../../domain/events/ProcessTerminatedEvent');
+const { PortUsage } = require('../../../domain/entities/PortUsage');
+const { PortNumber } = require('../../../domain/value-objects/PortNumber');
+const { Protocol } = require('../../../domain/value-objects/Protocol');
+const { ProcessId } = require('../../../domain/value-objects/ProcessId');
+
+class SqlitePortHistoryRepositoryAdapter extends PortHistoryRepositoryPort {
+  #db;
+
+  constructor(databasePath = ':memory:') {
+    super();
+
+    this.#db = new DatabaseSync(databasePath);
+    this.#db.exec(`
+      CREATE TABLE IF NOT EXISTS port_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        port INTEGER NOT NULL,
+        protocol TEXT NOT NULL,
+        pid INTEGER NOT NULL,
+        process_name TEXT NOT NULL,
+        occurred_at TEXT NOT NULL
+      )
+    `);
+  }
+
+  async save(event) {
+    const insert = this.#db.prepare(
+      'INSERT INTO port_history (port, protocol, pid, process_name, occurred_at) VALUES (?, ?, ?, ?, ?)'
+    );
+
+    insert.run(
+      event.portUsage.portNumber.value,
+      event.portUsage.protocol.value,
+      event.portUsage.pid.value,
+      event.portUsage.processName,
+      event.occurredAt.toISOString()
+    );
+  }
+
+  async findAll() {
+    const rows = this.#db.prepare('SELECT * FROM port_history ORDER BY id ASC').all();
+    return rows.map((row) => this.#toEvent(row));
+  }
+
+  #toEvent(row) {
+    const usage = new PortUsage({
+      portNumber: new PortNumber(row.port),
+      protocol: new Protocol(row.protocol),
+      pid: new ProcessId(row.pid),
+      processName: row.process_name,
+    });
+
+    return new ProcessTerminatedEvent(usage, new Date(row.occurred_at));
+  }
+
+  close() {
+    this.#db.close();
+  }
+}
+
+module.exports = { SqlitePortHistoryRepositoryAdapter };
