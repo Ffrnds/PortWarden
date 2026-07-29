@@ -1,0 +1,48 @@
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const { spawn } = require('node:child_process');
+const request = require('supertest');
+const { createApp } = require('../../src/server');
+
+// The real end-to-end proof: the actual Express app, wired to the actual
+// Windows adapters (real netstat/tasklist/taskkill, real SQLite file),
+// listing and killing a disposable child process this test owns — never a
+// real system process.
+describe('Port Manager API (e2e)', () => {
+  it('lists a real listener, kills it through the API, and records it in history', async () => {
+    const databasePath = path.join(os.tmpdir(), `port-manager-e2e-${process.pid}-${Math.floor(Math.random() * 1e6)}.sqlite`);
+    const { app, close } = createApp({ databasePath });
+
+    const child = spawn(process.execPath, [
+      '-e',
+      "const s = require('net').createServer(); s.listen(0, '127.0.0.1', () => console.log(s.address().port)); setInterval(() => {}, 1000);",
+    ]);
+
+    try {
+      const port = await new Promise((resolve) => {
+        child.stdout.once('data', (data) => resolve(Number(data.toString().trim())));
+      });
+
+      const listResponse = await request(app).get('/api/ports');
+      expect(listResponse.status).toBe(200);
+      expect(listResponse.body.some((usage) => usage.port === port && usage.pid === child.pid)).toBe(true);
+
+      const exited = new Promise((resolve) => child.once('exit', resolve));
+      const killResponse = await request(app).delete(`/api/ports/${port}`);
+      expect(killResponse.status).toBe(200);
+      expect(killResponse.body.pid).toBe(child.pid);
+      await exited;
+
+      const historyResponse = await request(app).get('/api/history');
+      expect(historyResponse.status).toBe(200);
+      expect(historyResponse.body.some((event) => event.port === port && event.pid === child.pid)).toBe(true);
+    } finally {
+      if (child.exitCode === null) {
+        child.kill();
+      }
+      close();
+      fs.rmSync(databasePath, { force: true });
+    }
+  }, 20000);
+});
