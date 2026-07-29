@@ -3,6 +3,6 @@ dist/
 *.log
 .env
 *.sqlite
-/apps/desktop/data/
-/apps/desktop/test-results/
-/apps/desktop/playwright-report/
+data/
+test-results/
+playwright-report/
