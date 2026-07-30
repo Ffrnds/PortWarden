@@ -16,11 +16,11 @@ describe('openApiSpec', () => {
 });
 
 describe('setupSwagger', () => {
-  it('serves the docs UI at /api-docs', async () => {
+  it('serves the docs UI at /docs', async () => {
     const app = express();
     setupSwagger(app);
 
-    const response = await request(app).get('/api-docs/');
+    const response = await request(app).get('/docs/');
 
     expect(response.status).toBe(200);
     expect(response.text).toContain('swagger-ui');

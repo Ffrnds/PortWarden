@@ -20,7 +20,7 @@ npm run dev
 ```
 
 Sobe em `http://localhost:3000` (configurável via `apps/api/.env`, veja `.env.example`).
-Docs interativas em `http://localhost:3000/api-docs`, métricas Prometheus em `/metrics`.
+Docs interativas em `http://localhost:3000/docs`, métricas Prometheus em `/metrics`.
 
 ## Observabilidade local (Prometheus + Grafana)
 

@@ -55,7 +55,7 @@ const openApiSpec = {
 };
 
 function setupSwagger(app) {
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
+  app.use('/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 }
 
 module.exports = { setupSwagger, openApiSpec };

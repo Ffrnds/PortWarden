@@ -2,7 +2,7 @@
   "title": "Port Manager",
   "uid": "port-manager",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "editable": true,
   "time": { "from": "now-6h", "to": "now" },
   "refresh": "30s",
@@ -24,10 +24,44 @@
       "targets": [{ "expr": "port_manager_processes_terminated_total", "refId": "A" }]
     },
     {
+      "id": 5,
+      "type": "timeseries",
+      "title": "HTTP requests/sec by route and status",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (route, status_code) (rate(http_requests_total[1m]))",
+          "refId": "A",
+          "legendFormat": "{{method}} {{route}} ({{status_code}})"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "HTTP request duration — p50/p95 (ms)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "ms" }, "overrides": [] },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(http_request_duration_seconds_bucket[5m]))) * 1000",
+          "refId": "A",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m]))) * 1000",
+          "refId": "B",
+          "legendFormat": "p95"
+        }
+      ]
+    },
+    {
       "id": 3,
       "type": "timeseries",
       "title": "API process CPU usage",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [{ "expr": "rate(process_cpu_user_seconds_total[5m])", "refId": "A", "legendFormat": "user CPU time/sec" }]
     },
@@ -35,7 +69,7 @@
       "id": 4,
       "type": "timeseries",
       "title": "API process memory (RSS)",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [{ "expr": "process_resident_memory_bytes", "refId": "A" }]
     }
