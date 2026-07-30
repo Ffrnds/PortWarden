@@ -20,6 +20,9 @@ import {
   getPortNote,
   setPortNote,
   getPortNotes,
+  getProcessAlias,
+  setProcessAlias,
+  getProcessAliases,
 } from './ui/preferences.js';
 
 const apiPort = new URLSearchParams(location.search).get('apiPort');
@@ -40,11 +43,15 @@ const hiddenProcessesList = document.getElementById('hidden-ports-list');
 const noHiddenPorts = document.getElementById('no-hidden-ports');
 const tabPorts = document.getElementById('tab-ports');
 const tabConnections = document.getElementById('tab-connections');
+const searchButton = document.getElementById('search-button');
+const searchBar = document.getElementById('search-bar');
+const searchInput = document.getElementById('search-input');
 
 let latestPorts = [];
 let latestProtectedPorts = [];
 let latestConnections = [];
 let currentView = 'ports'; // 'ports' | 'connections'
+let searchText = '';
 
 function showError(message) {
   errorBanner.textContent = message;
@@ -86,14 +93,17 @@ function applyFiltersAndRender(protectedPorts = latestProtectedPorts) {
   const visiblePorts = filterVisiblePorts(latestPorts, {
     hiddenProcessNames: getHiddenProcessNames(),
     hideSystemPorts: getHideSystemPorts(),
+    searchText,
+    resolveAlias: getProcessAlias,
   });
 
-  renderPortRows(portsListElement, visiblePorts, protectedPorts, getPortNotes(), {
+  renderPortRows(portsListElement, visiblePorts, protectedPorts, getPortNotes(), getProcessAliases(), {
     onKill: handleKill,
     onProtect: handleProtect,
     onUnprotect: handleUnprotect,
     onHide: handleHide,
     onEditNote: handleEditNote,
+    onRename: handleRename,
   });
 
   emptyState.hidden = visiblePorts.length > 0;
@@ -104,14 +114,16 @@ function applyFiltersAndRender(protectedPorts = latestProtectedPorts) {
 }
 
 function renderConnectionsView(connections) {
-  // Same hidden-process-names/system-noise filters apply here too — a
-  // browser alone can hold dozens of established connections.
+  // Same hidden-process-names/system-noise/search filters apply here too —
+  // a browser alone can hold dozens of established connections.
   const visibleConnections = filterVisiblePorts(connections, {
     hiddenProcessNames: getHiddenProcessNames(),
     hideSystemPorts: getHideSystemPorts(),
+    searchText,
+    resolveAlias: getProcessAlias,
   });
 
-  renderConnectionRows(connectionsListElement, visibleConnections, { onKill: handleKillConnection });
+  renderConnectionRows(connectionsListElement, visibleConnections, getProcessAliases(), { onKill: handleKillConnection });
 
   connectionsEmptyState.hidden = visibleConnections.length > 0;
 
@@ -221,6 +233,18 @@ function handleHide(port) {
   applyFiltersAndRender();
 }
 
+function handleRename(port) {
+  const current = getProcessAlias(port.processName);
+  const next = window.prompt(`Apelido para "${port.processName}" (deixe em branco para remover):`, current);
+
+  if (next === null) {
+    return; // cancelled
+  }
+
+  setProcessAlias(port.processName, next);
+  rerenderCurrentView();
+}
+
 function handleEditNote(port) {
   const key = portKey(port);
   const current = getPortNote(key);
@@ -252,6 +276,19 @@ hideSystemToggle.addEventListener('change', () => {
 
 tabPorts.addEventListener('click', () => switchView('ports'));
 tabConnections.addEventListener('click', () => switchView('connections'));
+
+searchButton.addEventListener('click', () => {
+  searchBar.hidden = !searchBar.hidden;
+  searchButton.classList.toggle('active', !searchBar.hidden);
+  if (!searchBar.hidden) {
+    searchInput.focus();
+  }
+});
+
+searchInput.addEventListener('input', () => {
+  searchText = searchInput.value;
+  rerenderCurrentView();
+});
 
 renderHiddenProcessesList();
 

@@ -50,4 +50,58 @@ describe('filterVisiblePorts', () => {
 
     expect(visible.map((p) => p.port)).toEqual([8080]);
   });
+
+  it('matches search text against the process name', () => {
+    const ports = [buildPort(8080, 'node.exe'), buildPort(5432, 'postgres.exe')];
+
+    const visible = filterVisiblePorts(ports, { searchText: 'postgres' });
+
+    expect(visible.map((p) => p.port)).toEqual([5432]);
+  });
+
+  it('matches search text against the port number', () => {
+    const ports = [buildPort(8080, 'node.exe'), buildPort(5432, 'postgres.exe')];
+
+    const visible = filterVisiblePorts(ports, { searchText: '5432' });
+
+    expect(visible.map((p) => p.port)).toEqual([5432]);
+  });
+
+  it('matches search text against the executable path', () => {
+    const ports = [
+      { port: 8080, protocol: 'TCP', pid: 1, processName: 'helper.exe', executablePath: 'C:\\Discord\\helper.exe' },
+      { port: 5432, protocol: 'TCP', pid: 2, processName: 'helper.exe', executablePath: 'C:\\Slack\\helper.exe' },
+    ];
+
+    const visible = filterVisiblePorts(ports, { searchText: 'discord' });
+
+    expect(visible.map((p) => p.port)).toEqual([8080]);
+  });
+
+  it('matches search text against a resolved alias', () => {
+    const ports = [buildPort(8080, 'helper.exe')];
+
+    const visible = filterVisiblePorts(ports, {
+      searchText: 'discord overlay',
+      resolveAlias: (name) => (name === 'helper.exe' ? 'Discord Overlay' : ''),
+    });
+
+    expect(visible.map((p) => p.port)).toEqual([8080]);
+  });
+
+  it('is case-insensitive and ignores surrounding whitespace', () => {
+    const ports = [buildPort(8080, 'Node.exe')];
+
+    const visible = filterVisiblePorts(ports, { searchText: '  NODE  ' });
+
+    expect(visible.map((p) => p.port)).toEqual([8080]);
+  });
+
+  it('excludes everything when the search text matches nothing', () => {
+    const ports = [buildPort(8080, 'node.exe')];
+
+    const visible = filterVisiblePorts(ports, { searchText: 'nonexistent' });
+
+    expect(visible).toEqual([]);
+  });
 });

@@ -16,8 +16,13 @@
       <div class="widget__header">
         <img src="assets/logo.svg" alt="" width="26" height="26" />
         <span class="widget__title">PORTPULSE</span>
+        <button id="search-button" class="widget__icon-btn" title="Buscar">&#128269;</button>
         <button id="filter-button" class="widget__icon-btn" title="Filtrar portas">&#9776;</button>
         <button id="hide-button" class="widget__icon-btn" title="Esconder">&mdash;</button>
+      </div>
+
+      <div id="search-bar" class="search-bar" hidden>
+        <input type="text" id="search-input" class="search-input" placeholder="Buscar por nome, porta, caminho, apelido..." />
       </div>
 
       <div id="filter-panel" class="filter-panel" hidden>
