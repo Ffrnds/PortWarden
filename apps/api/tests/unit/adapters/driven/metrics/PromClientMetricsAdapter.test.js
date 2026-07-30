@@ -24,4 +24,12 @@ describe('PromClientMetricsAdapter', () => {
 
     expect(adapter.contentType).toContain('text/plain');
   });
+
+  it('also exposes default Node.js runtime metrics (memory, CPU, event loop)', async () => {
+    const adapter = new PromClientMetricsAdapter();
+
+    const text = await adapter.metrics();
+
+    expect(text).toContain('process_resident_memory_bytes');
+  });
 });

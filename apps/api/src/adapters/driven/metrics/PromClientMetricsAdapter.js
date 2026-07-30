@@ -11,6 +11,9 @@ class PromClientMetricsAdapter {
       help: 'Total number of processes terminated via Port Manager',
       registers: [this.#registry],
     });
+    // Free Node.js runtime metrics (CPU, memory, event loop lag, GC) —
+    // built into prom-client, no extra dependency.
+    client.collectDefaultMetrics({ register: this.#registry });
   }
 
   recordTermination() {
