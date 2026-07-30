@@ -18,7 +18,7 @@ function createApp(config = env) {
   const app = express();
   app.use(cors());
   app.use(express.json());
-  app.use(createRequestLogger(logger));
+  app.use(createRequestLogger(logger, metrics));
   app.use('/api', createPortsRouter({ ...useCases, metrics }));
   app.get('/metrics', createMetricsController(metrics));
   setupSwagger(app);
