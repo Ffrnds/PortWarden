@@ -42,6 +42,11 @@ function buildCompositionRoot(config = env) {
     unprotectPortUseCase: new UnprotectPortUseCase(portProtectionRepository),
     listProtectedPortsUseCase: new ListProtectedPortsUseCase(portProtectionRepository),
     listOutboundConnectionsUseCase: new ListOutboundConnectionsUseCase(portInspector),
+    // Exposed directly (bypassing a use case) for the readiness health
+    // check, the same pragmatic call already made for /metrics: health and
+    // metrics are operational concerns about the adapters themselves, not
+    // domain behavior worth modeling as a use case.
+    portHistoryRepository,
     close() {
       portHistoryRepository.close();
       portProtectionRepository.close();

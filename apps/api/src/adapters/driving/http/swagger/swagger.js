@@ -62,6 +62,18 @@ const openApiSpec = {
         responses: { 200: { description: 'Metrics in Prometheus text exposition format' } },
       },
     },
+    '/health/live': {
+      get: {
+        summary: 'Liveness probe — 200 whenever the process is running',
+        responses: { 200: { description: 'Process is alive' } },
+      },
+    },
+    '/health/ready': {
+      get: {
+        summary: 'Readiness probe — checks the database connection',
+        responses: { 200: { description: 'Ready to serve requests' }, 503: { description: 'A dependency is unreachable' } },
+      },
+    },
   },
 };
 

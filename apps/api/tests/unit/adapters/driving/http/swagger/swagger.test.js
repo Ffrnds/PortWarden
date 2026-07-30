@@ -3,7 +3,7 @@ const request = require('supertest');
 const { setupSwagger, openApiSpec } = require('../../../../../../src/adapters/driving/http/swagger/swagger');
 
 describe('openApiSpec', () => {
-  it('documents all seven API endpoints', () => {
+  it('documents all nine API endpoints', () => {
     expect(Object.keys(openApiSpec.paths)).toEqual([
       '/api/ports',
       '/api/ports/{port}',
@@ -12,6 +12,8 @@ describe('openApiSpec', () => {
       '/api/protection',
       '/api/connections',
       '/metrics',
+      '/health/live',
+      '/health/ready',
     ]);
   });
 });

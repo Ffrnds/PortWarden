@@ -6,6 +6,10 @@ const { createPortsRouter } = require('./adapters/driving/http/routes/portsRoute
 const { createErrorHandler } = require('./adapters/driving/http/errorHandler');
 const { createRequestLogger } = require('./adapters/driving/http/requestLogger');
 const { createMetricsController } = require('./adapters/driving/http/controllers/createMetricsController');
+const {
+  createLivenessController,
+  createReadinessController,
+} = require('./adapters/driving/http/controllers/createHealthController');
 const { setupSwagger } = require('./adapters/driving/http/swagger/swagger');
 const { PinoLoggerAdapter } = require('./adapters/driven/logging/PinoLoggerAdapter');
 const { PromClientMetricsAdapter } = require('./adapters/driven/metrics/PromClientMetricsAdapter');
@@ -21,6 +25,8 @@ function createApp(config = env) {
   app.use(createRequestLogger(logger, metrics));
   app.use('/api', createPortsRouter({ ...useCases, metrics }));
   app.get('/metrics', createMetricsController(metrics));
+  app.get('/health/live', createLivenessController());
+  app.get('/health/ready', createReadinessController({ portHistoryRepository: useCases.portHistoryRepository }));
   setupSwagger(app);
   app.use(createErrorHandler(logger));
 
