@@ -175,6 +175,13 @@ Hoje: `PinoLoggerAdapter` escreve logs estruturados localmente, `PromClientMetri
 expõe `/metrics` em texto simples. O `ObservabilityGatewayPort` está implementado por um
 `InMemoryObservabilityGateway` (usado em dev e nos testes).
 
+Wiring de verdade fica em `server.js` (não em `composition-root.js`, já que log/métricas
+não são Ports de domínio): `createRequestLogger` loga todo request (método, path, status,
+duração), `createErrorHandler` loga o `stack` só quando o erro é inesperado (500 — os
+outros já são resultado de negócio conhecido), e `GET /metrics` expõe o registry do
+Prometheus. `KillPortUseCase` bem-sucedido incrementa o contador de processos encerrados
+via `createKillPortController`.
+
 Quando decidirmos ligar o Grafana Cloud: troca-se só a implementação injetada no
 `composition-root.js` (`LokiCloudGateway` no lugar do `InMemory...`) — nenhum caso de uso
 muda. Métricas (Prometheus remote_write) exigem protobuf+snappy, então usarão o

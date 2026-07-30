@@ -3,7 +3,7 @@ const { PortNumber } = require('../../../../domain/value-objects/PortNumber');
 const { Protocol } = require('../../../../domain/value-objects/Protocol');
 const { parsePortParam, ValidationError } = require('../validators/parsePortParam');
 
-function createKillPortController(killPortUseCase) {
+function createKillPortController(killPortUseCase, metricsAdapter) {
   return async function killPortController(req, res, next) {
     try {
       const dto = new KillPortRequestDTO({
@@ -21,6 +21,7 @@ function createKillPortController(killPortUseCase) {
       }
 
       const event = await killPortUseCase.execute({ portNumber, protocol });
+      metricsAdapter.recordTermination();
 
       res.status(200).json({
         port: event.portUsage.portNumber.value,

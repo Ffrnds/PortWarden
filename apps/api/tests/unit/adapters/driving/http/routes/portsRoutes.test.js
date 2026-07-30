@@ -1,7 +1,7 @@
 const express = require('express');
 const request = require('supertest');
 const { createPortsRouter } = require('../../../../../../src/adapters/driving/http/routes/portsRoutes');
-const { errorHandler } = require('../../../../../../src/adapters/driving/http/errorHandler');
+const { createErrorHandler } = require('../../../../../../src/adapters/driving/http/errorHandler');
 const { PortUsage } = require('../../../../../../src/domain/entities/PortUsage');
 const { PortNumber } = require('../../../../../../src/domain/value-objects/PortNumber');
 const { Protocol } = require('../../../../../../src/domain/value-objects/Protocol');
@@ -26,13 +26,15 @@ function buildApp(overrides = {}) {
     getPortHistoryUseCase: { execute: async () => [] },
     protectPortUseCase: { execute: async () => {} },
     listProtectedPortsUseCase: { execute: async () => [] },
+    metrics: { recordTermination: () => {} },
     ...overrides,
   };
 
+  const silentLogger = { info: () => {}, warn: () => {}, error: () => {} };
   const app = express();
   app.use(express.json());
   app.use('/api', createPortsRouter(useCases));
-  app.use(errorHandler);
+  app.use(createErrorHandler(silentLogger));
   return app;
 }
 
@@ -64,6 +66,15 @@ describe('DELETE /api/ports/:port', () => {
       processName: 'node.exe',
       occurredAt: '2026-07-29T12:00:00.000Z',
     });
+  });
+
+  it('records a termination metric on a successful kill', async () => {
+    let recorded = 0;
+    const app = buildApp({ metrics: { recordTermination: () => { recorded += 1; } } });
+
+    await request(app).delete('/api/ports/8080');
+
+    expect(recorded).toBe(1);
   });
 
   it('defaults protocol to TCP when not given as a query param', async () => {

@@ -11,11 +11,12 @@ function createPortsRouter({
   getPortHistoryUseCase,
   protectPortUseCase,
   listProtectedPortsUseCase,
+  metrics,
 }) {
   const router = Router();
 
   router.get('/ports', createListPortsController(listPortsUseCase));
-  router.delete('/ports/:port', createKillPortController(killPortUseCase));
+  router.delete('/ports/:port', createKillPortController(killPortUseCase, metrics));
   router.get('/history', createGetPortHistoryController(getPortHistoryUseCase));
   router.put('/protection/:port', createProtectPortController(protectPortUseCase));
   router.get('/protection', createListProtectedPortsController(listProtectedPortsUseCase));

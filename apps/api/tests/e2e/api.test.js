@@ -46,6 +46,10 @@ describe('Port Manager API (e2e)', () => {
       const historyResponse = await request(app).get('/api/history');
       expect(historyResponse.status).toBe(200);
       expect(historyResponse.body.some((event) => event.port === port && event.pid === child.pid)).toBe(true);
+
+      const metricsResponse = await request(app).get('/metrics');
+      expect(metricsResponse.status).toBe(200);
+      expect(metricsResponse.text).toMatch(/port_manager_processes_terminated_total 1/);
     } finally {
       if (child.exitCode === null) {
         child.kill();

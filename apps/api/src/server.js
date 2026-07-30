@@ -3,18 +3,26 @@ const cors = require('cors');
 const { env } = require('./config/env');
 const { buildCompositionRoot } = require('./config/composition-root');
 const { createPortsRouter } = require('./adapters/driving/http/routes/portsRoutes');
-const { errorHandler } = require('./adapters/driving/http/errorHandler');
+const { createErrorHandler } = require('./adapters/driving/http/errorHandler');
+const { createRequestLogger } = require('./adapters/driving/http/requestLogger');
+const { createMetricsController } = require('./adapters/driving/http/controllers/createMetricsController');
 const { setupSwagger } = require('./adapters/driving/http/swagger/swagger');
+const { PinoLoggerAdapter } = require('./adapters/driven/logging/PinoLoggerAdapter');
+const { PromClientMetricsAdapter } = require('./adapters/driven/metrics/PromClientMetricsAdapter');
 
 function createApp(config = env) {
   const useCases = buildCompositionRoot(config);
+  const logger = new PinoLoggerAdapter();
+  const metrics = new PromClientMetricsAdapter();
 
   const app = express();
   app.use(cors());
   app.use(express.json());
-  app.use('/api', createPortsRouter(useCases));
+  app.use(createRequestLogger(logger));
+  app.use('/api', createPortsRouter({ ...useCases, metrics }));
+  app.get('/metrics', createMetricsController(metrics));
   setupSwagger(app);
-  app.use(errorHandler);
+  app.use(createErrorHandler(logger));
 
   return { app, close: () => useCases.close() };
 }
