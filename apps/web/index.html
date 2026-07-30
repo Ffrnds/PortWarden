@@ -32,10 +32,18 @@
         </div>
       </div>
 
+      <div class="view-tabs">
+        <button id="tab-ports" class="view-tab active" type="button">Portas</button>
+        <button id="tab-connections" class="view-tab" type="button">Conexões de saída</button>
+      </div>
+
       <div id="error-banner" class="error-banner" hidden></div>
 
       <ul id="ports-list" class="widget__list"></ul>
       <p id="empty-state" class="empty-state" hidden>Nenhuma porta ativa.</p>
+
+      <ul id="connections-list" class="widget__list" hidden></ul>
+      <p id="connections-empty-state" class="empty-state" hidden>Nenhuma conexão de saída.</p>
 
       <div class="widget__footer">
         <span id="port-count">0 portas ativas</span>

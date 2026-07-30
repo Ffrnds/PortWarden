@@ -37,3 +37,9 @@ export async function unprotectPort(apiBaseUrl, port) {
   const response = await fetch(`${apiBaseUrl}/protection/${port}`, { method: 'DELETE' });
   await assertOk(response, 'Não foi possível desproteger a porta.');
 }
+
+export async function listOutboundConnections(apiBaseUrl) {
+  const response = await fetch(`${apiBaseUrl}/connections`);
+  await assertOk(response, 'Não foi possível listar as conexões de saída.');
+  return response.json();
+}

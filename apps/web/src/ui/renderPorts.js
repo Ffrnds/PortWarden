@@ -27,7 +27,13 @@ export function buildPortRow(port, isProtected, note, { onKill, onProtect, onUnp
 
   const processLine = document.createElement('div');
   processLine.className = 'port-process';
-  processLine.textContent = `${port.protocol.toLowerCase()} · ${port.processName}`;
+  processLine.textContent = `${port.protocol.toLowerCase()} · ${port.processName} · PID ${port.pid}`;
+  if (port.executablePath) {
+    // Full path in a native tooltip — the compact row has no room to show
+    // it inline, but it's exactly what tells apart generic names like
+    // "helper.exe" that several unrelated apps all happen to use.
+    processLine.title = port.executablePath;
+  }
 
   info.append(number, processLine);
 

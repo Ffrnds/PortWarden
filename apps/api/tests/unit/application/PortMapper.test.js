@@ -4,12 +4,13 @@ const { PortNumber } = require('../../../src/domain/value-objects/PortNumber');
 const { Protocol } = require('../../../src/domain/value-objects/Protocol');
 const { ProcessId } = require('../../../src/domain/value-objects/ProcessId');
 
-function buildPortUsage(portNumber) {
+function buildPortUsage(portNumber, overrides = {}) {
   return new PortUsage({
     portNumber: new PortNumber(portNumber),
     protocol: new Protocol('TCP'),
     pid: new ProcessId(1234),
     processName: 'node.exe',
+    ...overrides,
   });
 }
 
@@ -17,7 +18,13 @@ describe('PortMapper', () => {
   it('maps a PortUsage entity to a flat PortDTO', () => {
     const dto = PortMapper.toDTO(buildPortUsage(8080));
 
-    expect(dto).toEqual({ port: 8080, protocol: 'TCP', pid: 1234, processName: 'node.exe' });
+    expect(dto).toEqual({ port: 8080, protocol: 'TCP', pid: 1234, processName: 'node.exe', executablePath: null });
+  });
+
+  it('includes the executable path when present', () => {
+    const dto = PortMapper.toDTO(buildPortUsage(8080, { executablePath: 'C:\\node.exe' }));
+
+    expect(dto.executablePath).toBe('C:\\node.exe');
   });
 
   it('maps a list of PortUsage entities to a list of PortDTOs', () => {

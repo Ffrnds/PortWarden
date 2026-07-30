@@ -60,6 +60,12 @@ test.describe('apps/web UI', () => {
   });
 
   test('protects a port by clicking its dot, and unprotects it by clicking again', async ({ page }) => {
+    // Two full protect/unprotect round trips, each triggering a real
+    // netstat+tasklist refresh — under heavy system load each can take
+    // 20-30s, which adds up past the default 45s per-test timeout even
+    // though no single assertion's own timeout is hit.
+    test.setTimeout(120000);
+
     await goto(page);
     const firstRow = page.locator('#ports-list .port-row').first();
     await expect(firstRow).toBeVisible({ timeout: 30000 });
@@ -171,5 +177,23 @@ test.describe('apps/web UI', () => {
         child.kill();
       }
     }
+  });
+
+  test('switches to the outbound connections tab and back', async ({ page }) => {
+    await goto(page);
+    await expect(page.locator('#ports-list .port-row').first()).toBeVisible({ timeout: 30000 });
+
+    await page.locator('#tab-connections').click();
+
+    await expect(page.locator('#tab-connections')).toHaveClass(/active/);
+    await expect(page.locator('#ports-list')).toBeHidden();
+    await expect(page.locator('#connections-list')).toBeVisible();
+    await expect(page.locator('#error-banner')).toBeHidden({ timeout: 15000 });
+
+    await page.locator('#tab-ports').click();
+
+    await expect(page.locator('#tab-ports')).toHaveClass(/active/);
+    await expect(page.locator('#ports-list')).toBeVisible();
+    await expect(page.locator('#connections-list')).toBeHidden();
   });
 });

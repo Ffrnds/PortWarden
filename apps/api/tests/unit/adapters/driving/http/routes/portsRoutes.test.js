@@ -3,6 +3,7 @@ const request = require('supertest');
 const { createPortsRouter } = require('../../../../../../src/adapters/driving/http/routes/portsRoutes');
 const { createErrorHandler } = require('../../../../../../src/adapters/driving/http/errorHandler');
 const { PortUsage } = require('../../../../../../src/domain/entities/PortUsage');
+const { OutboundConnection } = require('../../../../../../src/domain/entities/OutboundConnection');
 const { PortNumber } = require('../../../../../../src/domain/value-objects/PortNumber');
 const { Protocol } = require('../../../../../../src/domain/value-objects/Protocol');
 const { ProcessId } = require('../../../../../../src/domain/value-objects/ProcessId');
@@ -27,6 +28,7 @@ function buildApp(overrides = {}) {
     protectPortUseCase: { execute: async () => {} },
     unprotectPortUseCase: { execute: async () => {} },
     listProtectedPortsUseCase: { execute: async () => [] },
+    listOutboundConnectionsUseCase: { execute: async () => [] },
     metrics: { recordTermination: () => {} },
     ...overrides,
   };
@@ -47,8 +49,8 @@ describe('GET /api/ports', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual([
-      { port: 8080, protocol: 'TCP', pid: 1234, processName: 'node.exe' },
-      { port: 3000, protocol: 'TCP', pid: 1234, processName: 'node.exe' },
+      { port: 8080, protocol: 'TCP', pid: 1234, processName: 'node.exe', executablePath: null },
+      { port: 3000, protocol: 'TCP', pid: 1234, processName: 'node.exe', executablePath: null },
     ]);
   });
 });
@@ -65,6 +67,7 @@ describe('DELETE /api/ports/:port', () => {
       protocol: 'TCP',
       pid: 1234,
       processName: 'node.exe',
+      executablePath: null,
       occurredAt: '2026-07-29T12:00:00.000Z',
     });
   });
@@ -164,7 +167,14 @@ describe('GET /api/history', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual([
-      { port: 8080, protocol: 'TCP', pid: 1234, processName: 'node.exe', occurredAt: '2026-07-29T12:00:00.000Z' },
+      {
+        port: 8080,
+        protocol: 'TCP',
+        pid: 1234,
+        processName: 'node.exe',
+        executablePath: null,
+        occurredAt: '2026-07-29T12:00:00.000Z',
+      },
     ]);
   });
 });
@@ -215,5 +225,36 @@ describe('GET /api/protection', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual([5432, 6379]);
+  });
+});
+
+describe('GET /api/connections', () => {
+  it('returns the mapped list of outbound connections', async () => {
+    const connection = new OutboundConnection({
+      localPort: new PortNumber(51234),
+      protocol: new Protocol('TCP'),
+      remoteAddress: '142.250.72.14',
+      remotePort: new PortNumber(443),
+      remoteHost: 'google.com',
+      pid: new ProcessId(4112),
+      processName: 'msedge.exe',
+    });
+    const app = buildApp({ listOutboundConnectionsUseCase: { execute: async () => [connection] } });
+
+    const response = await request(app).get('/api/connections');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([
+      {
+        localPort: 51234,
+        protocol: 'TCP',
+        remoteAddress: '142.250.72.14',
+        remotePort: 443,
+        remoteHost: 'google.com',
+        pid: 4112,
+        processName: 'msedge.exe',
+        executablePath: null,
+      },
+    ]);
   });
 });

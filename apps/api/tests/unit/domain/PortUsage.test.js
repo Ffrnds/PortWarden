@@ -21,6 +21,17 @@ describe('PortUsage', () => {
     expect(usage.protocol.value).toBe('TCP');
     expect(usage.pid.value).toBe(1234);
     expect(usage.processName).toBe('node.exe');
+    expect(usage.executablePath).toBeNull();
+  });
+
+  it('accepts an optional executable path', () => {
+    const usage = buildPortUsage({ executablePath: 'C:\\Program Files\\nodejs\\node.exe' });
+
+    expect(usage.executablePath).toBe('C:\\Program Files\\nodejs\\node.exe');
+  });
+
+  it('rejects a non-string, non-null executablePath', () => {
+    expect(() => buildPortUsage({ executablePath: 123 })).toThrow();
   });
 
   it('rejects raw primitives instead of value objects', () => {

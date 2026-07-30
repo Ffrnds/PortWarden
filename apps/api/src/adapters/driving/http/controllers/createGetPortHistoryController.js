@@ -9,6 +9,7 @@ function createGetPortHistoryController(getPortHistoryUseCase) {
           protocol: event.portUsage.protocol.value,
           pid: event.portUsage.pid.value,
           processName: event.portUsage.processName,
+          executablePath: event.portUsage.executablePath,
           occurredAt: event.occurredAt.toISOString(),
         }))
       );

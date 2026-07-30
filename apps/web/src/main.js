@@ -1,5 +1,13 @@
-import { listPorts, listProtectedPorts, killPort, protectPort, unprotectPort } from './api/portsApiClient.js';
+import {
+  listPorts,
+  listProtectedPorts,
+  killPort,
+  protectPort,
+  unprotectPort,
+  listOutboundConnections,
+} from './api/portsApiClient.js';
 import { renderPortRows, formatPortCountLabel, portKey } from './ui/renderPorts.js';
+import { renderConnectionRows, formatConnectionCountLabel } from './ui/renderConnections.js';
 import { generateTwinkleSpecs, renderTwinkleField } from './ui/twinkleField.js';
 import { filterVisiblePorts } from './ui/filterPorts.js';
 import { disintegrateRow } from './ui/disintegrate.js';
@@ -19,6 +27,8 @@ const apiBaseUrl = `http://127.0.0.1:${apiPort}/api`;
 
 const portsListElement = document.getElementById('ports-list');
 const emptyState = document.getElementById('empty-state');
+const connectionsListElement = document.getElementById('connections-list');
+const connectionsEmptyState = document.getElementById('connections-empty-state');
 const errorBanner = document.getElementById('error-banner');
 const portCountElement = document.getElementById('port-count');
 const refreshIndicator = document.getElementById('refresh-indicator');
@@ -28,9 +38,13 @@ const filterPanel = document.getElementById('filter-panel');
 const hideSystemToggle = document.getElementById('hide-system-toggle');
 const hiddenProcessesList = document.getElementById('hidden-ports-list');
 const noHiddenPorts = document.getElementById('no-hidden-ports');
+const tabPorts = document.getElementById('tab-ports');
+const tabConnections = document.getElementById('tab-connections');
 
 let latestPorts = [];
 let latestProtectedPorts = [];
+let latestConnections = [];
+let currentView = 'ports'; // 'ports' | 'connections'
 
 function showError(message) {
   errorBanner.textContent = message;
@@ -60,7 +74,7 @@ function renderHiddenProcessesList() {
     unhideButton.addEventListener('click', () => {
       unhideProcessName(name);
       renderHiddenProcessesList();
-      applyFiltersAndRender();
+      rerenderCurrentView();
     });
 
     item.append(label, unhideButton);
@@ -89,14 +103,53 @@ function applyFiltersAndRender(protectedPorts = latestProtectedPorts) {
     formatPortCountLabel(visiblePorts.length) + (hiddenCount > 0 ? ` (${hiddenCount} ocultas)` : '');
 }
 
+function renderConnectionsView(connections) {
+  // Same hidden-process-names/system-noise filters apply here too — a
+  // browser alone can hold dozens of established connections.
+  const visibleConnections = filterVisiblePorts(connections, {
+    hiddenProcessNames: getHiddenProcessNames(),
+    hideSystemPorts: getHideSystemPorts(),
+  });
+
+  renderConnectionRows(connectionsListElement, visibleConnections, { onKill: handleKillConnection });
+
+  connectionsEmptyState.hidden = visibleConnections.length > 0;
+
+  const hiddenCount = connections.length - visibleConnections.length;
+  portCountElement.textContent =
+    formatConnectionCountLabel(visibleConnections.length) + (hiddenCount > 0 ? ` (${hiddenCount} ocultas)` : '');
+}
+
+async function refreshPorts() {
+  const [ports, protectedPorts] = await Promise.all([listPorts(apiBaseUrl), listProtectedPorts(apiBaseUrl)]);
+  latestPorts = ports;
+  latestProtectedPorts = protectedPorts;
+  applyFiltersAndRender(protectedPorts);
+}
+
+async function refreshConnections() {
+  const connections = await listOutboundConnections(apiBaseUrl);
+  latestConnections = connections;
+  renderConnectionsView(connections);
+}
+
+function rerenderCurrentView() {
+  if (currentView === 'ports') {
+    applyFiltersAndRender();
+  } else {
+    renderConnectionsView(latestConnections);
+  }
+}
+
 async function refresh() {
   refreshIndicator.classList.add('spinning');
   try {
-    const [ports, protectedPorts] = await Promise.all([listPorts(apiBaseUrl), listProtectedPorts(apiBaseUrl)]);
+    if (currentView === 'ports') {
+      await refreshPorts();
+    } else {
+      await refreshConnections();
+    }
     clearError();
-    latestPorts = ports;
-    latestProtectedPorts = protectedPorts;
-    applyFiltersAndRender(protectedPorts);
   } catch (error) {
     showError(error.message);
   } finally {
@@ -104,9 +157,36 @@ async function refresh() {
   }
 }
 
+function switchView(view) {
+  if (view === currentView) {
+    return;
+  }
+
+  currentView = view;
+  tabPorts.classList.toggle('active', view === 'ports');
+  tabConnections.classList.toggle('active', view === 'connections');
+  portsListElement.hidden = view !== 'ports';
+  emptyState.hidden = view !== 'ports' || portsListElement.children.length > 0;
+  connectionsListElement.hidden = view !== 'connections';
+  connectionsEmptyState.hidden = view !== 'connections' || connectionsListElement.children.length > 0;
+
+  refresh();
+}
+
 async function handleKill(port, row) {
   try {
     await killPort(apiBaseUrl, port.port, port.protocol);
+    clearError();
+    await disintegrateRow(row);
+    await refresh();
+  } catch (error) {
+    showError(error.message);
+  }
+}
+
+async function handleKillConnection(connection, row) {
+  try {
+    await killPort(apiBaseUrl, connection.localPort, connection.protocol);
     clearError();
     await disintegrateRow(row);
     await refresh();
@@ -167,8 +247,11 @@ filterButton.addEventListener('click', () => {
 hideSystemToggle.checked = getHideSystemPorts();
 hideSystemToggle.addEventListener('change', () => {
   setHideSystemPorts(hideSystemToggle.checked);
-  applyFiltersAndRender();
+  rerenderCurrentView();
 });
+
+tabPorts.addEventListener('click', () => switchView('ports'));
+tabConnections.addEventListener('click', () => switchView('connections'));
 
 renderHiddenProcessesList();
 
