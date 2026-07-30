@@ -17,7 +17,7 @@ pra ficar testável sem depender de Windows/rede/banco real nos testes de unidad
 | Test runner | Vitest | Mais rápido que Jest, boa integração com ESM |
 | E2E do desktop | Playwright | Suporta Electron nativamente |
 | Observabilidade | **Local por enquanto** | Grafana Cloud fica pra uma fase futura — o gateway já foi desenhado pra essa troca ser indolor |
-| Docker | Não é dependência do core | Só entraria se decidirmos hospedar Prometheus/Loki/Grafana localmente, o que não é o plano agora |
+| Docker | Só pra Prometheus + Grafana (`docker-compose.yml`), nunca pra API | A API precisa rodar direto no Windows host pra `netstat`/`tasklist`/`taskkill` funcionarem de verdade — um container (Linux ou Windows) é isolado do namespace de processos/rede do host, então não conseguiria listar nem matar processos reais. Prometheus faz scrape do `/metrics` via `host.docker.internal:3000` |
 | Persistência de portas protegidas | `PortProtectionRepositoryPort` (nova outbound port) | Faltava no desenho original; `PortProtectionPolicy` é imutável de propósito, então a config do usuário precisa de uma Port própria pra persistir |
 | Portas protegidas em runtime | `KillPortUseCase` monta a `PortProtectionPolicy` a cada `execute()`, lendo do repository | Sem isso, proteger uma porta via `ProtectPortUseCase` só valeria depois de reiniciar o processo |
 | `apps/web` servido por HTTP, não `file://` | `apps/desktop/src/main.js` sobe um segundo Express (só `express.static`), `loadURL()` em vez de `loadFile()` | Chromium bloqueia `<script type="module">` carregado via `file://` (CORS). Ficou fora de `apps/api` de propósito — a API continua uma REST API pura, sem virar servidor de frontend |
@@ -28,6 +28,10 @@ pra ficar testável sem depender de Windows/rede/banco real nos testes de unidad
 port-manager/
 ├── package.json          <- raiz, define os workspaces
 ├── design/               <- mockups e referências visuais, não roda no app
+├── docker-compose.yml    <- Prometheus + Grafana, só observabilidade (ver decisão sobre Docker acima)
+├── docker/
+│   ├── prometheus/prometheus.yml
+│   └── grafana/provisioning/    <- datasource + dashboard já pré-configurados, sem passo manual na UI
 └── apps/
     ├── desktop/           <- Electron: janela sempre-no-topo, tray, servidor estático de apps/web
     ├── web/               <- HTML/CSS/ES modules, servido por HTTP (não file://) pelo desktop
@@ -186,6 +190,14 @@ Quando decidirmos ligar o Grafana Cloud: troca-se só a implementação injetada
 `composition-root.js` (`LokiCloudGateway` no lugar do `InMemory...`) — nenhum caso de uso
 muda. Métricas (Prometheus remote_write) exigem protobuf+snappy, então usarão o
 **Grafana Alloy** como agente local em vez de um gateway feito à mão.
+
+**Grafana local (hoje, via Docker):** `docker compose up -d` na raiz sobe Prometheus
+(faz scrape de `http://host.docker.internal:3000/metrics` — a API continua rodando
+direto no Windows, não em container, ver decisão sobre Docker acima) e Grafana em
+`http://localhost:3001`, já com o datasource e um dashboard ("Port Manager": total de
+processos encerrados, CPU/memória do processo Node) provisionados — não precisa
+configurar nada na UI. Login anônimo como Admin habilitado só por conveniência local
+(`docker-compose.yml`); reavaliar se isso algum dia sair do `localhost`.
 
 ## Estratégia de testes
 
