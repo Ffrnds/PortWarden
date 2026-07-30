@@ -33,11 +33,11 @@ describe('formatPortCountLabel', () => {
 });
 
 describe('buildPortRow', () => {
-  it('renders the port number, protocol, and process name', () => {
+  it('renders the port number, protocol, process name, and PID', () => {
     const row = buildPortRow(buildPort(), false, '', buildHandlers());
 
     expect(row.querySelector('.port-number').textContent).toBe('8080');
-    expect(row.querySelector('.port-process').textContent).toBe('tcp · node.exe');
+    expect(row.querySelector('.port-process').textContent).toBe('tcp · node.exe · PID 1234');
     expect(row.classList.contains('protected')).toBe(false);
   });
 
@@ -46,6 +46,18 @@ describe('buildPortRow', () => {
 
     expect(row.classList.contains('protected')).toBe(true);
     expect(row.querySelector('.port-dot').disabled).toBe(false);
+  });
+
+  it('shows the executable path as a tooltip when known', () => {
+    const row = buildPortRow(buildPort({ executablePath: 'C:\\Program Files\\nodejs\\node.exe' }), false, '', buildHandlers());
+
+    expect(row.querySelector('.port-process').title).toBe('C:\\Program Files\\nodejs\\node.exe');
+  });
+
+  it('has no tooltip when the executable path is unknown', () => {
+    const row = buildPortRow(buildPort({ executablePath: null }), false, '', buildHandlers());
+
+    expect(row.querySelector('.port-process').title).toBe('');
   });
 
   it('does not render a note line when there is no note', () => {
