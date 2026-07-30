@@ -6,9 +6,21 @@ const { ProcessId } = require('../../../src/domain/value-objects/ProcessId');
 
 describe('PortDTO', () => {
   it('holds plain primitive fields', () => {
-    const dto = new PortDTO({ port: 8080, protocol: 'TCP', pid: 1234, processName: 'node.exe' });
+    const dto = new PortDTO({
+      port: 8080,
+      protocol: 'TCP',
+      pid: 1234,
+      processName: 'node.exe',
+      executablePath: 'C:\\Program Files\\nodejs\\node.exe',
+    });
 
-    expect(dto).toEqual({ port: 8080, protocol: 'TCP', pid: 1234, processName: 'node.exe' });
+    expect(dto).toEqual({
+      port: 8080,
+      protocol: 'TCP',
+      pid: 1234,
+      processName: 'node.exe',
+      executablePath: 'C:\\Program Files\\nodejs\\node.exe',
+    });
   });
 
   it('serializes to the expected JSON shape, unlike the domain entity it represents', () => {
@@ -23,6 +35,7 @@ describe('PortDTO', () => {
       protocol: usage.protocol.value,
       pid: usage.pid.value,
       processName: usage.processName,
+      executablePath: usage.executablePath,
     });
 
     // The domain entity's private fields (#portNumber, #protocol, #pid) are not
@@ -34,6 +47,7 @@ describe('PortDTO', () => {
       protocol: 'TCP',
       pid: 1234,
       processName: 'node.exe',
+      executablePath: null,
     });
   });
 });

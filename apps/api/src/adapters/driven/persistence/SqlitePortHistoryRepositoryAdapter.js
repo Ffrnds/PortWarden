@@ -20,6 +20,7 @@ class SqlitePortHistoryRepositoryAdapter extends PortHistoryRepositoryPort {
         protocol TEXT NOT NULL,
         pid INTEGER NOT NULL,
         process_name TEXT NOT NULL,
+        executable_path TEXT,
         occurred_at TEXT NOT NULL
       )
     `);
@@ -27,7 +28,7 @@ class SqlitePortHistoryRepositoryAdapter extends PortHistoryRepositoryPort {
 
   async save(event) {
     const insert = this.#db.prepare(
-      'INSERT INTO port_history (port, protocol, pid, process_name, occurred_at) VALUES (?, ?, ?, ?, ?)'
+      'INSERT INTO port_history (port, protocol, pid, process_name, executable_path, occurred_at) VALUES (?, ?, ?, ?, ?, ?)'
     );
 
     insert.run(
@@ -35,6 +36,7 @@ class SqlitePortHistoryRepositoryAdapter extends PortHistoryRepositoryPort {
       event.portUsage.protocol.value,
       event.portUsage.pid.value,
       event.portUsage.processName,
+      event.portUsage.executablePath,
       event.occurredAt.toISOString()
     );
   }
@@ -50,6 +52,7 @@ class SqlitePortHistoryRepositoryAdapter extends PortHistoryRepositoryPort {
       protocol: new Protocol(row.protocol),
       pid: new ProcessId(row.pid),
       processName: row.process_name,
+      executablePath: row.executable_path,
     });
 
     return new ProcessTerminatedEvent(usage, new Date(row.occurred_at));

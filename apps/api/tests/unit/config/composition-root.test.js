@@ -8,6 +8,7 @@ const { GetPortHistoryPort } = require('../../../src/domain/ports/inbound/GetPor
 const { ProtectPortPort } = require('../../../src/domain/ports/inbound/ProtectPortPort');
 const { UnprotectPortPort } = require('../../../src/domain/ports/inbound/UnprotectPortPort');
 const { ListProtectedPortsPort } = require('../../../src/domain/ports/inbound/ListProtectedPortsPort');
+const { ListOutboundConnectionsPort } = require('../../../src/domain/ports/inbound/ListOutboundConnectionsPort');
 
 describe('buildCompositionRoot', () => {
   it('wires every use case behind its inbound port, using a throwaway database', () => {
@@ -22,6 +23,7 @@ describe('buildCompositionRoot', () => {
       expect(useCases.protectPortUseCase).toBeInstanceOf(ProtectPortPort);
       expect(useCases.unprotectPortUseCase).toBeInstanceOf(UnprotectPortPort);
       expect(useCases.listProtectedPortsUseCase).toBeInstanceOf(ListProtectedPortsPort);
+      expect(useCases.listOutboundConnectionsUseCase).toBeInstanceOf(ListOutboundConnectionsPort);
     } finally {
       useCases.close();
       fs.rmSync(databasePath, { force: true });

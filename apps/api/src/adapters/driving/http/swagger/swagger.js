@@ -50,6 +50,12 @@ const openApiSpec = {
         responses: { 200: { description: 'List of protected port numbers' } },
       },
     },
+    '/api/connections': {
+      get: {
+        summary: 'List established outbound connections (remote host resolved via reverse DNS, best-effort)',
+        responses: { 200: { description: 'List of outbound connections' } },
+      },
+    },
     '/metrics': {
       get: {
         summary: 'Prometheus metrics (scrape endpoint)',

@@ -1,4 +1,4 @@
-const { parseSsOutput } = require('../../../../../src/adapters/driven/os/UnixPortInspectorAdapter');
+const { parseSsOutput, parseSsOutboundOutput } = require('../../../../../src/adapters/driven/os/UnixPortInspectorAdapter');
 
 const SAMPLE_SS_OUTPUT = [
   'Netid State  Recv-Q Send-Q   Local Address:Port    Peer Address:Port  Process',
@@ -34,5 +34,30 @@ describe('parseSsOutput', () => {
 
   it('ignores the header line', () => {
     expect(parseSsOutput('Netid State  Recv-Q Send-Q   Local Address:Port    Peer Address:Port  Process')).toEqual([]);
+  });
+});
+
+describe('parseSsOutboundOutput', () => {
+  const SAMPLE_SS_TNP_OUTPUT = [
+    'Netid State  Recv-Q Send-Q   Local Address:Port    Peer Address:Port  Process',
+    'tcp   ESTAB  0      0        192.168.1.5:45678     93.184.216.34:443  users:(("curl",pid=4321,fd=5))',
+    'tcp   LISTEN 0      128      0.0.0.0:22            0.0.0.0:*          users:(("sshd",pid=1234,fd=3))',
+  ].join('\n');
+
+  it('includes only ESTABLISHED TCP rows', () => {
+    const connections = parseSsOutboundOutput(SAMPLE_SS_TNP_OUTPUT);
+
+    expect(connections).toHaveLength(1);
+    expect(connections[0].localPort.value).toBe(45678);
+    expect(connections[0].remoteAddress).toBe('93.184.216.34');
+    expect(connections[0].remotePort.value).toBe(443);
+    expect(connections[0].pid.value).toBe(4321);
+    expect(connections[0].processName).toBe('curl');
+  });
+
+  it('excludes LISTEN rows', () => {
+    const connections = parseSsOutboundOutput(SAMPLE_SS_TNP_OUTPUT);
+
+    expect(connections.some((connection) => connection.pid.value === 1234)).toBe(false);
   });
 });

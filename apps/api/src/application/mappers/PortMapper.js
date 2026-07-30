@@ -7,6 +7,7 @@ class PortMapper {
       protocol: portUsage.protocol.value,
       pid: portUsage.pid.value,
       processName: portUsage.processName,
+      executablePath: portUsage.executablePath,
     });
   }
 
