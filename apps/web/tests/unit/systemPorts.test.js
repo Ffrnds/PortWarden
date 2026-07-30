@@ -8,6 +8,7 @@ describe('isSystemPort', () => {
   it('recognizes known Windows system processes', () => {
     expect(isSystemPort(buildPort('System'))).toBe(true);
     expect(isSystemPort(buildPort('svchost.exe'))).toBe(true);
+    expect(isSystemPort(buildPort('btweb.exe'))).toBe(true);
   });
 
   it('is case-insensitive', () => {

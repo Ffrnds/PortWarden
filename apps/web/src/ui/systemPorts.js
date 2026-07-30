@@ -14,6 +14,7 @@ const SYSTEM_PROCESS_NAMES = new Set([
   'dns.exe',
   'registry',
   'memory compression',
+  'btweb.exe',
 ]);
 
 export function isSystemPort(port) {
