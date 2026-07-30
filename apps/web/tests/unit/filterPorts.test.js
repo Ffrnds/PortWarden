@@ -11,12 +11,28 @@ describe('filterVisiblePorts', () => {
     expect(filterVisiblePorts(ports)).toEqual(ports);
   });
 
-  it('excludes manually hidden ports by key', () => {
-    const ports = [buildPort(8080, 'node.exe'), buildPort(3000, 'node.exe')];
+  it('excludes ports whose process name is hidden', () => {
+    const ports = [buildPort(8080, 'btweb.exe'), buildPort(3000, 'node.exe')];
 
-    const visible = filterVisiblePorts(ports, { hiddenKeys: ['8080/TCP'] });
+    const visible = filterVisiblePorts(ports, { hiddenProcessNames: ['btweb.exe'] });
 
     expect(visible.map((p) => p.port)).toEqual([3000]);
+  });
+
+  it('hides every port from that process, even across different port numbers', () => {
+    const ports = [buildPort(65425, 'btweb.exe'), buildPort(65426, 'btweb.exe'), buildPort(3000, 'node.exe')];
+
+    const visible = filterVisiblePorts(ports, { hiddenProcessNames: ['btweb.exe'] });
+
+    expect(visible.map((p) => p.port)).toEqual([3000]);
+  });
+
+  it('matches hidden process names case-insensitively', () => {
+    const ports = [buildPort(8080, 'BTWeb.exe')];
+
+    const visible = filterVisiblePorts(ports, { hiddenProcessNames: ['btweb.exe'] });
+
+    expect(visible).toEqual([]);
   });
 
   it('excludes system ports when hideSystemPorts is on', () => {
@@ -28,9 +44,9 @@ describe('filterVisiblePorts', () => {
   });
 
   it('combines both filters', () => {
-    const ports = [buildPort(445, 'System'), buildPort(8080, 'node.exe'), buildPort(3000, 'node.exe')];
+    const ports = [buildPort(445, 'System'), buildPort(8080, 'node.exe'), buildPort(3000, 'btweb.exe')];
 
-    const visible = filterVisiblePorts(ports, { hiddenKeys: ['3000/TCP'], hideSystemPorts: true });
+    const visible = filterVisiblePorts(ports, { hiddenProcessNames: ['btweb.exe'], hideSystemPorts: true });
 
     expect(visible.map((p) => p.port)).toEqual([8080]);
   });

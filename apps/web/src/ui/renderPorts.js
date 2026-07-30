@@ -6,19 +6,20 @@ export function formatPortCountLabel(count) {
   return `${count} ${count === 1 ? 'porta ativa' : 'portas ativas'}`;
 }
 
-export function buildPortRow(port, isProtected, { onKill, onProtect, onHide }) {
+export function buildPortRow(port, isProtected, note, { onKill, onProtect, onUnprotect, onHide, onEditNote }) {
   const row = document.createElement('li');
   row.className = 'port-row' + (isProtected ? ' protected' : '');
   row.dataset.portKey = portKey(port);
 
   const dot = document.createElement('button');
   dot.className = 'port-dot';
-  dot.title = isProtected ? 'Porta protegida' : 'Proteger porta';
-  dot.disabled = isProtected;
-  dot.addEventListener('click', () => onProtect(port.port));
+  dot.title = isProtected ? 'Clique para desproteger' : 'Proteger porta';
+  dot.addEventListener('click', () => (isProtected ? onUnprotect(port.port) : onProtect(port.port)));
 
   const info = document.createElement('span');
   info.className = 'port-info';
+  info.title = note ? 'Clique para editar a observação' : 'Clique para adicionar uma observação';
+  info.addEventListener('click', () => onEditNote(port));
 
   const number = document.createElement('div');
   number.className = 'port-number';
@@ -30,9 +31,16 @@ export function buildPortRow(port, isProtected, { onKill, onProtect, onHide }) {
 
   info.append(number, processLine);
 
+  if (note) {
+    const noteLine = document.createElement('div');
+    noteLine.className = 'port-note';
+    noteLine.textContent = note;
+    info.append(noteLine);
+  }
+
   const hideButton = document.createElement('button');
   hideButton.className = 'row-hide-btn';
-  hideButton.title = 'Ocultar da lista';
+  hideButton.title = `Ocultar todas as portas de "${port.processName}"`;
   hideButton.textContent = '×';
   hideButton.addEventListener('click', () => onHide(port));
 
@@ -45,11 +53,12 @@ export function buildPortRow(port, isProtected, { onKill, onProtect, onHide }) {
   return row;
 }
 
-export function renderPortRows(listElement, ports, protectedPorts, handlers) {
+export function renderPortRows(listElement, ports, protectedPorts, notes, handlers) {
   const protectedSet = new Set(protectedPorts);
 
   listElement.innerHTML = '';
   ports.forEach((port) => {
-    listElement.appendChild(buildPortRow(port, protectedSet.has(port.port), handlers));
+    const note = notes[portKey(port)] || '';
+    listElement.appendChild(buildPortRow(port, protectedSet.has(port.port), note, handlers));
   });
 }

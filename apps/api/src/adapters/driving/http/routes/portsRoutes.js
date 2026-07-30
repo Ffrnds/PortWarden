@@ -3,6 +3,7 @@ const { createListPortsController } = require('../controllers/createListPortsCon
 const { createKillPortController } = require('../controllers/createKillPortController');
 const { createGetPortHistoryController } = require('../controllers/createGetPortHistoryController');
 const { createProtectPortController } = require('../controllers/createProtectPortController');
+const { createUnprotectPortController } = require('../controllers/createUnprotectPortController');
 const { createListProtectedPortsController } = require('../controllers/createListProtectedPortsController');
 
 function createPortsRouter({
@@ -10,6 +11,7 @@ function createPortsRouter({
   killPortUseCase,
   getPortHistoryUseCase,
   protectPortUseCase,
+  unprotectPortUseCase,
   listProtectedPortsUseCase,
   metrics,
 }) {
@@ -19,6 +21,7 @@ function createPortsRouter({
   router.delete('/ports/:port', createKillPortController(killPortUseCase, metrics));
   router.get('/history', createGetPortHistoryController(getPortHistoryUseCase));
   router.put('/protection/:port', createProtectPortController(protectPortUseCase));
+  router.delete('/protection/:port', createUnprotectPortController(unprotectPortUseCase));
   router.get('/protection', createListProtectedPortsController(listProtectedPortsUseCase));
 
   return router;

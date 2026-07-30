@@ -1,34 +1,37 @@
 #!/usr/bin/env node
-// One-time dev tool: renders a simplified, pixel-accurate version of
-// apps/web/assets/logo.svg (hexagon core + 3 satellite dots + connecting
-// lines) into a real PNG, using nothing but node:zlib for the deflate step.
-// No image library, no Electron GUI needed (that can't run headless in some
-// environments) — just per-pixel math and a hand-built PNG file.
+// One-time dev tool: renders a bold, simplified version of
+// apps/web/assets/logo.svg (hexagon + core dot) into a real PNG, using
+// nothing but node:zlib for the deflate step. No image library, no
+// Electron GUI needed (that can't run headless in some environments) —
+// just per-pixel math and a hand-built PNG file.
+//
+// This is deliberately NOT a faithful full-detail reproduction of the logo
+// (no thin connecting lines, no satellite dots, no soft glow) — those read
+// fine at logo size but disappear into mush at a 24-32px taskbar/tray icon.
+// Bold shapes, high contrast, big fill factor: that's what stays legible
+// small.
 const fs = require('node:fs');
 const path = require('node:path');
 const zlib = require('node:zlib');
 
 const SIZE = 256;
-const SCALE = SIZE / 240; // logo.svg's viewBox is 240x240
+const CENTER = [SIZE / 2, SIZE / 2];
 
 const CYAN = [0x35, 0xf2, 0xff];
 const MAGENTA = [0xff, 0x33, 0x99];
 const VOID_DARK = [0x0a, 0x0e, 0x1c];
 
-const CENTER = [120, 120];
-const HEX_POINTS = [
-  [120, 65],
-  [167.6, 92.5],
-  [167.6, 147.5],
-  [120, 175],
-  [72.4, 147.5],
-  [72.4, 92.5],
-];
-const STARS = [
-  { pos: [120, 25], color: CYAN },
-  { pos: [202.3, 167.5], color: MAGENTA },
-  { pos: [37.7, 167.5], color: MAGENTA },
-];
+// Hexagon scaled up to fill almost the whole canvas (logo.svg's own hexagon
+// only fills the middle ~46% of its viewBox — fine for a large logo, too
+// small to read once shrunk to icon size).
+const HEX_RADIUS = SIZE * 0.46;
+const HEX_POINTS = [0, 60, 120, 180, 240, 300].map((angleDeg) => {
+  const angle = ((angleDeg - 90) * Math.PI) / 180;
+  return [CENTER[0] + HEX_RADIUS * Math.cos(angle), CENTER[1] + HEX_RADIUS * Math.sin(angle)];
+});
+
+const STROKE_WIDTH = SIZE * 0.045;
+const CORE_RADIUS = SIZE * 0.16;
 
 function lerp(a, b, t) {
   return a + (b - a) * t;
@@ -46,7 +49,7 @@ function distanceToSegment(px, py, [x1, y1], [x2, y2]) {
   t = Math.max(0, Math.min(1, t));
   const closestX = x1 + t * dx;
   const closestY = y1 + t * dy;
-  return { distance: Math.hypot(px - closestX, py - closestY), t };
+  return { distance: Math.hypot(px - closestX, py - closestY) };
 }
 
 function pointInPolygon(px, py, points) {
@@ -67,51 +70,44 @@ function blendOver(dst, src) {
   return [blend(0), blend(1), blend(2), outA];
 }
 
-function glow([cx, cy], color, coreRadius, glowRadius, px, py) {
-  const d = Math.hypot(px - cx, py - cy);
-  if (d <= coreRadius) return [...color, 1];
-  if (d >= glowRadius) return [0, 0, 0, 0];
-  const alpha = 0.85 * (1 - (d - coreRadius) / (glowRadius - coreRadius));
-  return [...color, Math.max(0, alpha)];
+// Antialiasing: a soft 1px falloff at shape edges instead of a hard cutoff,
+// so the icon doesn't look jagged when Windows scales it down.
+function edgeAlpha(signedDistance) {
+  return Math.max(0, Math.min(1, 0.5 - signedDistance));
 }
 
-function pixelColor(xNorm, yNorm) {
-  // Work in the original 240x240 coordinate space, scale coordinates in.
-  const x = xNorm / SCALE;
-  const y = yNorm / SCALE;
-
+function pixelColor(px, py) {
   let pixel = [0, 0, 0, 0];
 
-  // Thin lines from the core to each satellite star.
-  STARS.forEach((star) => {
-    const { distance } = distanceToSegment(x, y, CENTER, star.pos);
-    if (distance < 0.6) {
-      pixel = blendOver(pixel, [...star.color, 0.55 * (1 - distance / 0.6)]);
-    }
-  });
+  const distToCore = Math.hypot(px - CENTER[0], py - CENTER[1]) - CORE_RADIUS;
+  const coreAlpha = edgeAlpha(distToCore);
 
-  // Hexagon: dark fill + gradient stroke (cyan top-left -> magenta bottom-right).
-  if (pointInPolygon(x, y, HEX_POINTS)) {
-    pixel = blendOver(pixel, [...VOID_DARK, 1]);
-  }
+  const inside = pointInPolygon(px, py, HEX_POINTS);
+  let minStrokeDist = Infinity;
+  let strokeGradT = 0;
   for (let i = 0; i < HEX_POINTS.length; i += 1) {
     const a = HEX_POINTS[i];
     const b = HEX_POINTS[(i + 1) % HEX_POINTS.length];
-    const { distance, t } = distanceToSegment(x, y, a, b);
-    if (distance < 3) {
-      const gradT = (a[0] + a[1] * 0.3 + (b[0] + b[1] * 0.3 - (a[0] + a[1] * 0.3)) * t) / 300;
-      const strokeColor = lerpColor(CYAN, MAGENTA, Math.max(0, Math.min(1, gradT)));
-      pixel = blendOver(pixel, [...strokeColor, Math.max(0, 1 - distance / 3)]);
+    const { distance } = distanceToSegment(px, py, a, b);
+    if (distance < minStrokeDist) {
+      minStrokeDist = distance;
+      strokeGradT = (a[0] + a[1]) / (SIZE * 2);
     }
   }
 
-  // Satellite stars, each with a soft glow.
-  STARS.forEach((star) => {
-    pixel = blendOver(pixel, glow(star.pos, star.color, 5, 12, x, y));
-  });
+  if (inside) {
+    pixel = blendOver(pixel, [...VOID_DARK, 1]);
+  }
 
-  // Core dot, with glow.
-  pixel = blendOver(pixel, glow(CENTER, CYAN, 8, 18, x, y));
+  const strokeAlpha = edgeAlpha(minStrokeDist - STROKE_WIDTH);
+  if (strokeAlpha > 0) {
+    const strokeColor = lerpColor(CYAN, MAGENTA, Math.max(0, Math.min(1, strokeGradT)));
+    pixel = blendOver(pixel, [...strokeColor, strokeAlpha]);
+  }
+
+  if (coreAlpha > 0) {
+    pixel = blendOver(pixel, [...CYAN, coreAlpha]);
+  }
 
   return pixel;
 }

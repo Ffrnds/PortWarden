@@ -25,6 +25,7 @@ function buildApp(overrides = {}) {
     killPortUseCase: { execute: async () => new ProcessTerminatedEvent(buildUsage(), new Date('2026-07-29T12:00:00.000Z')) },
     getPortHistoryUseCase: { execute: async () => [] },
     protectPortUseCase: { execute: async () => {} },
+    unprotectPortUseCase: { execute: async () => {} },
     listProtectedPortsUseCase: { execute: async () => [] },
     metrics: { recordTermination: () => {} },
     ...overrides,
@@ -181,6 +182,24 @@ describe('PUT /api/protection/:port', () => {
     const app = buildApp();
 
     const response = await request(app).put('/api/protection/not-a-number');
+
+    expect(response.status).toBe(400);
+  });
+});
+
+describe('DELETE /api/protection/:port', () => {
+  it('unprotects a port and returns 204', async () => {
+    const app = buildApp();
+
+    const response = await request(app).delete('/api/protection/5432');
+
+    expect(response.status).toBe(204);
+  });
+
+  it('rejects a non-numeric port with 400', async () => {
+    const app = buildApp();
+
+    const response = await request(app).delete('/api/protection/not-a-number');
 
     expect(response.status).toBe(400);
   });

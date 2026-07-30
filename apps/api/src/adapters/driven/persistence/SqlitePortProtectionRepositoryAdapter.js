@@ -25,6 +25,10 @@ class SqlitePortProtectionRepositoryAdapter extends PortProtectionRepositoryPort
     this.#db.prepare('INSERT OR IGNORE INTO protected_ports (port) VALUES (?)').run(portNumber.value);
   }
 
+  async remove(portNumber) {
+    this.#db.prepare('DELETE FROM protected_ports WHERE port = ?').run(portNumber.value);
+  }
+
   close() {
     this.#db.close();
   }

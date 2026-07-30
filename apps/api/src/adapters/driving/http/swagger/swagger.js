@@ -38,6 +38,11 @@ const openApiSpec = {
         parameters: [{ name: 'port', in: 'path', required: true, schema: { type: 'integer' } }],
         responses: { 204: { description: 'Port protected' }, 400: { description: 'Invalid port' } },
       },
+      delete: {
+        summary: 'Remove protection from a port',
+        parameters: [{ name: 'port', in: 'path', required: true, schema: { type: 'integer' } }],
+        responses: { 204: { description: 'Port unprotected' }, 400: { description: 'Invalid port' } },
+      },
     },
     '/api/protection': {
       get: {
