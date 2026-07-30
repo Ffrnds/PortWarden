@@ -4,6 +4,7 @@
 const HIDDEN_PROCESSES_KEY = 'portpulse:hiddenProcesses';
 const HIDE_SYSTEM_PORTS_KEY = 'portpulse:hideSystemPorts';
 const PORT_NOTES_KEY = 'portpulse:portNotes';
+const PROCESS_ALIASES_KEY = 'portpulse:processAliases';
 
 function readJson(key, fallback) {
   try {
@@ -66,4 +67,29 @@ export function setPortNote(key, note) {
   }
 
   localStorage.setItem(PORT_NOTES_KEY, JSON.stringify(notes));
+}
+
+// Aliases are keyed by process name, same reasoning as the hidden-processes
+// list: a generic executable like "helper.exe" is the same app everywhere it
+// shows up, regardless of which port it happens to be bound to this time.
+export function getProcessAliases() {
+  return readJson(PROCESS_ALIASES_KEY, {});
+}
+
+export function getProcessAlias(processName) {
+  return getProcessAliases()[processName.toLowerCase()] || '';
+}
+
+export function setProcessAlias(processName, alias) {
+  const aliases = getProcessAliases();
+  const key = processName.toLowerCase();
+  const trimmed = alias.trim();
+
+  if (trimmed) {
+    aliases[key] = trimmed;
+  } else {
+    delete aliases[key];
+  }
+
+  localStorage.setItem(PROCESS_ALIASES_KEY, JSON.stringify(aliases));
 }

@@ -2,7 +2,7 @@ export function formatConnectionCountLabel(count) {
   return `${count} ${count === 1 ? 'conexão ativa' : 'conexões ativas'}`;
 }
 
-export function buildConnectionRow(connection, { onKill }) {
+export function buildConnectionRow(connection, alias, { onKill }) {
   const row = document.createElement('li');
   row.className = 'port-row connection-row';
 
@@ -22,9 +22,20 @@ export function buildConnectionRow(connection, { onKill }) {
 
   const processLine = document.createElement('div');
   processLine.className = 'port-process';
-  processLine.textContent = `${connection.processName} · PID ${connection.pid} · porta local ${connection.localPort}`;
+  const displayName = alias || connection.processName;
+  processLine.textContent = `${displayName} · PID ${connection.pid} · porta local ${connection.localPort}`;
+  // Aliases are edited from the Ports tab (see renderPorts.js) — this tab
+  // just reflects them, so the tooltip surfaces the real name alongside
+  // the executable path rather than offering an edit action here too.
+  const tooltipParts = [];
+  if (alias) {
+    tooltipParts.push(connection.processName);
+  }
   if (connection.executablePath) {
-    processLine.title = connection.executablePath;
+    tooltipParts.push(connection.executablePath);
+  }
+  if (tooltipParts.length > 0) {
+    processLine.title = tooltipParts.join(' — ');
   }
 
   info.append(remoteLine, processLine);
@@ -38,9 +49,10 @@ export function buildConnectionRow(connection, { onKill }) {
   return row;
 }
 
-export function renderConnectionRows(listElement, connections, handlers) {
+export function renderConnectionRows(listElement, connections, aliases, handlers) {
   listElement.innerHTML = '';
   connections.forEach((connection) => {
-    listElement.appendChild(buildConnectionRow(connection, handlers));
+    const alias = aliases[connection.processName.toLowerCase()] || '';
+    listElement.appendChild(buildConnectionRow(connection, alias, handlers));
   });
 }

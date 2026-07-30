@@ -179,6 +179,45 @@ test.describe('apps/web UI', () => {
     }
   });
 
+  test('filters the port list by typing in the search bar', async ({ page }) => {
+    await goto(page);
+    const firstRow = page.locator('#ports-list .port-row').first();
+    await expect(firstRow).toBeVisible({ timeout: 30000 });
+
+    const totalRows = await page.locator('#ports-list .port-row').count();
+    // Search on the PID rather than the process name: several rows can
+    // share a process name (svchost.exe, browser helpers), but a PID search
+    // term is guaranteed to narrow the list down from "everything".
+    const processLineText = await firstRow.locator('.port-process').textContent();
+    const pid = processLineText.match(/PID (\d+)/)[1];
+
+    await page.locator('#search-button').click();
+    await expect(page.locator('#search-bar')).toBeVisible();
+    await page.locator('#search-input').fill(pid);
+
+    const filteredRows = page.locator('#ports-list .port-row');
+    await expect(filteredRows.first()).toBeVisible();
+    const filteredCount = await filteredRows.count();
+    expect(filteredCount).toBeLessThan(totalRows);
+    for (const row of await filteredRows.all()) {
+      await expect(row.locator('.port-process')).toContainText(pid);
+    }
+
+    await page.locator('#search-input').fill('');
+    await expect(page.locator('#ports-list .port-row')).toHaveCount(totalRows);
+  });
+
+  test('renames a process and shows the alias instead of the raw name', async ({ page }) => {
+    await goto(page);
+    const firstRow = page.locator('#ports-list .port-row').first();
+    await expect(firstRow).toBeVisible({ timeout: 30000 });
+
+    page.once('dialog', (dialog) => dialog.accept('Meu Apelido'));
+    await firstRow.locator('.row-rename-btn').click();
+
+    await expect(firstRow.locator('.port-process')).toContainText('Meu Apelido');
+  });
+
   test('switches to the outbound connections tab and back', async ({ page }) => {
     await goto(page);
     await expect(page.locator('#ports-list .port-row').first()).toBeVisible({ timeout: 30000 });

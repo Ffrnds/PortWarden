@@ -27,29 +27,36 @@ describe('formatConnectionCountLabel', () => {
 
 describe('buildConnectionRow', () => {
   it('shows the raw remote address when there is no resolved hostname', () => {
-    const row = buildConnectionRow(buildConnection(), { onKill: () => {} });
+    const row = buildConnectionRow(buildConnection(), '', { onKill: () => {} });
 
     expect(row.querySelector('.connection-remote').textContent).toBe('142.250.72.14');
     expect(row.querySelector('.connection-remote').title).toBe('');
   });
 
   it('prefers the resolved hostname over the raw IP, keeping the IP as a tooltip', () => {
-    const row = buildConnectionRow(buildConnection({ remoteHost: 'google.com' }), { onKill: () => {} });
+    const row = buildConnectionRow(buildConnection({ remoteHost: 'google.com' }), '', { onKill: () => {} });
 
     expect(row.querySelector('.connection-remote').textContent).toBe('google.com');
     expect(row.querySelector('.connection-remote').title).toBe('142.250.72.14');
   });
 
   it('shows process name, PID, and local port', () => {
-    const row = buildConnectionRow(buildConnection(), { onKill: () => {} });
+    const row = buildConnectionRow(buildConnection(), '', { onKill: () => {} });
 
     expect(row.querySelector('.port-process').textContent).toBe('msedge.exe · PID 4112 · porta local 51234');
+  });
+
+  it('shows the alias instead of the raw process name when one is set', () => {
+    const row = buildConnectionRow(buildConnection(), 'Microsoft Edge', { onKill: () => {} });
+
+    expect(row.querySelector('.port-process').textContent).toBe('Microsoft Edge · PID 4112 · porta local 51234');
+    expect(row.querySelector('.port-process').title).toBe('msedge.exe');
   });
 
   it('calls onKill with the connection and row when the kill button is clicked', () => {
     const onKill = vi.fn();
     const connection = buildConnection();
-    const row = buildConnectionRow(connection, { onKill });
+    const row = buildConnectionRow(connection, '', { onKill });
 
     row.querySelector('.kill-btn').click();
 
@@ -61,16 +68,24 @@ describe('renderConnectionRows', () => {
   it('renders one row per connection', () => {
     const list = document.createElement('ul');
 
-    renderConnectionRows(list, [buildConnection(), buildConnection({ localPort: 51235 })], { onKill: () => {} });
+    renderConnectionRows(list, [buildConnection(), buildConnection({ localPort: 51235 })], {}, { onKill: () => {} });
 
     expect(list.children).toHaveLength(2);
+  });
+
+  it('looks up each process alias by lowercased process name', () => {
+    const list = document.createElement('ul');
+
+    renderConnectionRows(list, [buildConnection()], { 'msedge.exe': 'Microsoft Edge' }, { onKill: () => {} });
+
+    expect(list.children[0].querySelector('.port-process').textContent).toContain('Microsoft Edge');
   });
 
   it('clears previous rows before rendering new ones', () => {
     const list = document.createElement('ul');
     list.innerHTML = '<li>stale</li>';
 
-    renderConnectionRows(list, [], { onKill: () => {} });
+    renderConnectionRows(list, [], {}, { onKill: () => {} });
 
     expect(list.children).toHaveLength(0);
   });
