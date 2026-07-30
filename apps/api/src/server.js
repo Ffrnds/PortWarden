@@ -10,6 +10,7 @@ const {
   createLivenessController,
   createReadinessController,
 } = require('./adapters/driving/http/controllers/createHealthController');
+const { createGeneralRateLimiter } = require('./adapters/driving/http/createRateLimiters');
 const { setupSwagger } = require('./adapters/driving/http/swagger/swagger');
 const { PinoLoggerAdapter } = require('./adapters/driven/logging/PinoLoggerAdapter');
 const { PromClientMetricsAdapter } = require('./adapters/driven/metrics/PromClientMetricsAdapter');
@@ -23,6 +24,7 @@ function createApp(config = env) {
   app.use(cors());
   app.use(express.json());
   app.use(createRequestLogger(logger, metrics));
+  app.use('/api', createGeneralRateLimiter());
   app.use('/api', createPortsRouter({ ...useCases, metrics }));
   app.get('/metrics', createMetricsController(metrics));
   app.get('/health/live', createLivenessController());
