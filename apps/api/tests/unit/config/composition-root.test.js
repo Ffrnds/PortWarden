@@ -24,6 +24,7 @@ describe('buildCompositionRoot', () => {
       expect(useCases.unprotectPortUseCase).toBeInstanceOf(UnprotectPortPort);
       expect(useCases.listProtectedPortsUseCase).toBeInstanceOf(ListProtectedPortsPort);
       expect(useCases.listOutboundConnectionsUseCase).toBeInstanceOf(ListOutboundConnectionsPort);
+      expect(typeof useCases.portHistoryRepository.ping).toBe('function');
     } finally {
       useCases.close();
       fs.rmSync(databasePath, { force: true });

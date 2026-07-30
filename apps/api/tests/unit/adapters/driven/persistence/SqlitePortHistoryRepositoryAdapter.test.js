@@ -47,4 +47,17 @@ describe('SqlitePortHistoryRepositoryAdapter', () => {
 
     expect(events.map((event) => event.portUsage.portNumber.value)).toEqual([8080, 3000]);
   });
+
+  it('pings without throwing while the database is open', () => {
+    const repository = new SqlitePortHistoryRepositoryAdapter();
+
+    expect(() => repository.ping()).not.toThrow();
+  });
+
+  it('throws when pinging after the database was closed', () => {
+    const repository = new SqlitePortHistoryRepositoryAdapter();
+    repository.close();
+
+    expect(() => repository.ping()).toThrow();
+  });
 });

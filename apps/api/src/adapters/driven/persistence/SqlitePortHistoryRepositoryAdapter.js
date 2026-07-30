@@ -46,6 +46,13 @@ class SqlitePortHistoryRepositoryAdapter extends PortHistoryRepositoryPort {
     return rows.map((row) => this.#toEvent(row));
   }
 
+  // Cheapest possible round trip to the database — used by the readiness
+  // health check to tell "process is up" apart from "process can actually
+  // read/write its data".
+  ping() {
+    this.#db.prepare('SELECT 1').get();
+  }
+
   #toEvent(row) {
     const usage = new PortUsage({
       portNumber: new PortNumber(row.port),
