@@ -6,6 +6,7 @@ const { ListPortsPort } = require('../../../src/domain/ports/inbound/ListPortsPo
 const { KillPortPort } = require('../../../src/domain/ports/inbound/KillPortPort');
 const { GetPortHistoryPort } = require('../../../src/domain/ports/inbound/GetPortHistoryPort');
 const { ProtectPortPort } = require('../../../src/domain/ports/inbound/ProtectPortPort');
+const { UnprotectPortPort } = require('../../../src/domain/ports/inbound/UnprotectPortPort');
 const { ListProtectedPortsPort } = require('../../../src/domain/ports/inbound/ListProtectedPortsPort');
 
 describe('buildCompositionRoot', () => {
@@ -19,6 +20,7 @@ describe('buildCompositionRoot', () => {
       expect(useCases.killPortUseCase).toBeInstanceOf(KillPortPort);
       expect(useCases.getPortHistoryUseCase).toBeInstanceOf(GetPortHistoryPort);
       expect(useCases.protectPortUseCase).toBeInstanceOf(ProtectPortPort);
+      expect(useCases.unprotectPortUseCase).toBeInstanceOf(UnprotectPortPort);
       expect(useCases.listProtectedPortsUseCase).toBeInstanceOf(ListProtectedPortsPort);
     } finally {
       useCases.close();
