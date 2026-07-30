@@ -45,6 +45,12 @@ const openApiSpec = {
         responses: { 200: { description: 'List of protected port numbers' } },
       },
     },
+    '/metrics': {
+      get: {
+        summary: 'Prometheus metrics (scrape endpoint)',
+        responses: { 200: { description: 'Metrics in Prometheus text exposition format' } },
+      },
+    },
   },
 };
 
