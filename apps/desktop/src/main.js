@@ -55,12 +55,29 @@ async function startEmbeddedApi() {
 // it over plain HTTP — from a second, separate static server, so apps/api
 // stays a clean REST API with no frontend-serving concern — sidesteps that
 // entirely.
+//
+// The port is fixed on purpose, unlike the embedded API's: apps/web keeps
+// display preferences (hidden processes, the system-ports toggle) in
+// localStorage, which the browser scopes per *origin* — host **and port**.
+// A random port here would silently wipe those preferences on every single
+// launch, since each run would look like a brand new origin with empty
+// storage.
+const WEB_SERVER_PREFERRED_PORT = 47823;
+
 async function startWebServer() {
   const staticApp = express();
   staticApp.use(express.static(path.join(__dirname, '../../web')));
 
   const httpServer = await new Promise((resolve) => {
-    const server = staticApp.listen(0, '127.0.0.1', () => resolve(server));
+    const server = staticApp.listen(WEB_SERVER_PREFERRED_PORT, '127.0.0.1');
+    server.once('listening', () => resolve(server));
+    server.once('error', () => {
+      // Something else already has that port — fall back to an OS-assigned
+      // one. Rare, and only costs that one session's saved preferences
+      // (protected ports themselves are safe either way, those live in
+      // SQLite via the API, not localStorage).
+      const fallback = staticApp.listen(0, '127.0.0.1', () => resolve(fallback));
+    });
   });
 
   return {

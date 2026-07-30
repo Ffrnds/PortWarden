@@ -1,5 +1,6 @@
 // Processes that are almost never what a developer is looking for in a
-// day-to-day port list — core Windows services, not something you spun up.
+// day-to-day port list — Windows services, browsers, and other background
+// apps you didn't start yourself, not something you spun up.
 const SYSTEM_PROCESS_NAMES = new Set([
   'system',
   'system idle process',
@@ -15,6 +16,11 @@ const SYSTEM_PROCESS_NAMES = new Set([
   'registry',
   'memory compression',
   'btweb.exe',
+  'helper.exe',
+  'code.exe',
+  'msedge.exe',
+  'onedrive.sync.service.exe',
+  'jhi_service.exe',
 ]);
 
 export function isSystemPort(port) {

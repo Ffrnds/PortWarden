@@ -1,14 +1,17 @@
-import { listPorts, listProtectedPorts, killPort, protectPort } from './api/portsApiClient.js';
+import { listPorts, listProtectedPorts, killPort, protectPort, unprotectPort } from './api/portsApiClient.js';
 import { renderPortRows, formatPortCountLabel, portKey } from './ui/renderPorts.js';
 import { generateTwinkleSpecs, renderTwinkleField } from './ui/twinkleField.js';
 import { filterVisiblePorts } from './ui/filterPorts.js';
 import { disintegrateRow } from './ui/disintegrate.js';
 import {
-  getHiddenPortKeys,
-  hidePortKey,
-  unhidePortKey,
+  getHiddenProcessNames,
+  hideProcessName,
+  unhideProcessName,
   getHideSystemPorts,
   setHideSystemPorts,
+  getPortNote,
+  setPortNote,
+  getPortNotes,
 } from './ui/preferences.js';
 
 const apiPort = new URLSearchParams(location.search).get('apiPort');
@@ -23,10 +26,11 @@ const hideButton = document.getElementById('hide-button');
 const filterButton = document.getElementById('filter-button');
 const filterPanel = document.getElementById('filter-panel');
 const hideSystemToggle = document.getElementById('hide-system-toggle');
-const hiddenPortsList = document.getElementById('hidden-ports-list');
+const hiddenProcessesList = document.getElementById('hidden-ports-list');
 const noHiddenPorts = document.getElementById('no-hidden-ports');
 
 let latestPorts = [];
+let latestProtectedPorts = [];
 
 function showError(message) {
   errorBanner.textContent = message;
@@ -38,42 +42,44 @@ function clearError() {
   errorBanner.textContent = '';
 }
 
-function renderHiddenPortsList() {
-  const hiddenKeys = getHiddenPortKeys();
-  hiddenPortsList.innerHTML = '';
-  noHiddenPorts.hidden = hiddenKeys.length > 0;
+function renderHiddenProcessesList() {
+  const hiddenNames = getHiddenProcessNames();
+  hiddenProcessesList.innerHTML = '';
+  noHiddenPorts.hidden = hiddenNames.length > 0;
 
-  hiddenKeys.forEach((key) => {
+  hiddenNames.forEach((name) => {
     const item = document.createElement('li');
     item.className = 'hidden-port-item';
 
     const label = document.createElement('span');
-    label.textContent = key;
+    label.textContent = name;
 
     const unhideButton = document.createElement('button');
     unhideButton.className = 'unhide-btn';
     unhideButton.textContent = 'Mostrar';
     unhideButton.addEventListener('click', () => {
-      unhidePortKey(key);
-      renderHiddenPortsList();
+      unhideProcessName(name);
+      renderHiddenProcessesList();
       applyFiltersAndRender();
     });
 
     item.append(label, unhideButton);
-    hiddenPortsList.appendChild(item);
+    hiddenProcessesList.appendChild(item);
   });
 }
 
-function applyFiltersAndRender(protectedPorts = []) {
+function applyFiltersAndRender(protectedPorts = latestProtectedPorts) {
   const visiblePorts = filterVisiblePorts(latestPorts, {
-    hiddenKeys: getHiddenPortKeys(),
+    hiddenProcessNames: getHiddenProcessNames(),
     hideSystemPorts: getHideSystemPorts(),
   });
 
-  renderPortRows(portsListElement, visiblePorts, protectedPorts, {
+  renderPortRows(portsListElement, visiblePorts, protectedPorts, getPortNotes(), {
     onKill: handleKill,
     onProtect: handleProtect,
+    onUnprotect: handleUnprotect,
     onHide: handleHide,
+    onEditNote: handleEditNote,
   });
 
   emptyState.hidden = visiblePorts.length > 0;
@@ -89,6 +95,7 @@ async function refresh() {
     const [ports, protectedPorts] = await Promise.all([listPorts(apiBaseUrl), listProtectedPorts(apiBaseUrl)]);
     clearError();
     latestPorts = ports;
+    latestProtectedPorts = protectedPorts;
     applyFiltersAndRender(protectedPorts);
   } catch (error) {
     showError(error.message);
@@ -118,9 +125,35 @@ async function handleProtect(port) {
   }
 }
 
+async function handleUnprotect(port) {
+  try {
+    await unprotectPort(apiBaseUrl, port);
+    clearError();
+    await refresh();
+  } catch (error) {
+    showError(error.message);
+  }
+}
+
 function handleHide(port) {
-  hidePortKey(portKey(port));
-  renderHiddenPortsList();
+  hideProcessName(port.processName);
+  renderHiddenProcessesList();
+  applyFiltersAndRender();
+}
+
+function handleEditNote(port) {
+  const key = portKey(port);
+  const current = getPortNote(key);
+  // window.prompt is blunt, but this is a personal desktop widget, not a
+  // web app aiming for polish on every corner — a custom modal for one
+  // occasional text field isn't worth the extra UI surface right now.
+  const next = window.prompt(`Observação para a porta ${port.port} (${port.processName}):`, current);
+
+  if (next === null) {
+    return; // cancelled
+  }
+
+  setPortNote(key, next);
   applyFiltersAndRender();
 }
 
@@ -137,7 +170,7 @@ hideSystemToggle.addEventListener('change', () => {
   applyFiltersAndRender();
 });
 
-renderHiddenPortsList();
+renderHiddenProcessesList();
 
 renderTwinkleField(
   document.getElementById('twinkle-field'),

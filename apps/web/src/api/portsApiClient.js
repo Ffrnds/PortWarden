@@ -32,3 +32,8 @@ export async function protectPort(apiBaseUrl, port) {
   const response = await fetch(`${apiBaseUrl}/protection/${port}`, { method: 'PUT' });
   await assertOk(response, 'Não foi possível proteger a porta.');
 }
+
+export async function unprotectPort(apiBaseUrl, port) {
+  const response = await fetch(`${apiBaseUrl}/protection/${port}`, { method: 'DELETE' });
+  await assertOk(response, 'Não foi possível desproteger a porta.');
+}

@@ -12,6 +12,13 @@
   box-sizing: border-box;
 }
 
+html {
+  /* Tells Chromium to use its dark form-control/scrollbar rendering as the
+     baseline — without this, default scrollbars and checkboxes render
+     light regardless of our own dark styling. */
+  color-scheme: dark;
+}
+
 html,
 body {
   margin: 0;
@@ -39,7 +46,7 @@ body {
   position: absolute;
   inset: 0;
   background: radial-gradient(ellipse at 30% 15%, var(--void-2) 0%, var(--void) 70%);
-  opacity: 0.62;
+  opacity: 0.94;
   z-index: 0;
 }
 
@@ -219,6 +226,32 @@ body {
   min-height: 0;
 }
 
+/* Chromium/Electron ignore `color-scheme`-based auto theming for
+   scrollbars unless we say so — without this the OS/browser default
+   (light) scrollbar shows up against the dark widget. */
+.widget__list,
+.hidden-ports-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(53, 242, 255, 0.35) transparent;
+}
+.widget__list::-webkit-scrollbar,
+.hidden-ports-list::-webkit-scrollbar {
+  width: 8px;
+}
+.widget__list::-webkit-scrollbar-track,
+.hidden-ports-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.widget__list::-webkit-scrollbar-thumb,
+.hidden-ports-list::-webkit-scrollbar-thumb {
+  background-color: rgba(53, 242, 255, 0.35);
+  border-radius: 999px;
+}
+.widget__list::-webkit-scrollbar-thumb:hover,
+.hidden-ports-list::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(53, 242, 255, 0.6);
+}
+
 .port-row {
   display: flex;
   align-items: center;
@@ -245,7 +278,6 @@ body {
 .port-row.protected .port-dot {
   background: var(--amber);
   box-shadow: 0 0 8px 2px rgba(255, 181, 69, 0.7);
-  cursor: default;
 }
 @keyframes dotpulse {
   0%,
@@ -260,6 +292,11 @@ body {
 .port-info {
   flex: 1;
   min-width: 0;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.port-info:hover {
+  background: rgba(255, 255, 255, 0.04);
 }
 .port-number {
   font-family: 'Share Tech Mono', monospace;
@@ -271,6 +308,15 @@ body {
   font-size: 12px;
   color: var(--muted);
   letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.port-note {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--cyan);
+  opacity: 0.85;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

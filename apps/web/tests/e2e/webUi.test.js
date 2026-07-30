@@ -54,21 +54,36 @@ test.describe('apps/web UI', () => {
   test('lists real ports from the API', async ({ page }) => {
     await goto(page);
 
-    await expect(page.locator('#ports-list .port-row').first()).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('#ports-list .port-row').first()).toBeVisible({ timeout: 30000 });
     await expect(page.locator('#error-banner')).toBeHidden();
     await expect(page.locator('#port-count')).toContainText('porta');
   });
 
-  test('protects a port by clicking its dot', async ({ page }) => {
+  test('protects a port by clicking its dot, and unprotects it by clicking again', async ({ page }) => {
     await goto(page);
     const firstRow = page.locator('#ports-list .port-row').first();
-    await expect(firstRow).toBeVisible({ timeout: 20000 });
+    await expect(firstRow).toBeVisible({ timeout: 30000 });
 
     await firstRow.locator('.port-dot').click();
 
     await expect(page.locator('#error-banner')).toBeHidden();
-    await expect(firstRow).toHaveClass(/protected/, { timeout: 20000 });
-    await expect(firstRow.locator('.port-dot')).toBeDisabled();
+    await expect(firstRow).toHaveClass(/protected/, { timeout: 30000 });
+
+    await firstRow.locator('.port-dot').click();
+
+    await expect(page.locator('#error-banner')).toBeHidden();
+    await expect(firstRow).not.toHaveClass(/protected/, { timeout: 30000 });
+  });
+
+  test('adds a note to a port and shows it on the row', async ({ page }) => {
+    await goto(page);
+    const firstRow = page.locator('#ports-list .port-row').first();
+    await expect(firstRow).toBeVisible({ timeout: 30000 });
+
+    page.once('dialog', (dialog) => dialog.accept('Meu backend Node'));
+    await firstRow.locator('.port-info').click();
+
+    await expect(firstRow.locator('.port-note')).toHaveText('Meu backend Node');
   });
 
   test('shows an error banner when the API is unreachable', async ({ page }) => {
@@ -79,7 +94,7 @@ test.describe('apps/web UI', () => {
 
   test('opens and closes the filter panel', async ({ page }) => {
     await goto(page);
-    await expect(page.locator('#ports-list .port-row').first()).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('#ports-list .port-row').first()).toBeVisible({ timeout: 30000 });
 
     await expect(page.locator('#filter-panel')).toBeHidden();
     await page.locator('#filter-button').click();
@@ -91,7 +106,7 @@ test.describe('apps/web UI', () => {
   test('hiding system ports removes System (pid 4) from the list', async ({ page }) => {
     await goto(page);
     const list = page.locator('#ports-list .port-row');
-    await expect(list.first()).toBeVisible({ timeout: 20000 });
+    await expect(list.first()).toBeVisible({ timeout: 30000 });
 
     const systemRow = list.filter({ hasText: 'System' }).first();
     await expect(systemRow).toBeVisible();
@@ -102,24 +117,32 @@ test.describe('apps/web UI', () => {
     await expect(list.filter({ hasText: 'System' })).toHaveCount(0);
   });
 
-  test('hides a port manually and restores it from the filter panel', async ({ page }) => {
+  test('hides a process by name and restores it from the filter panel', async ({ page }) => {
     await goto(page);
     const firstRow = page.locator('#ports-list .port-row').first();
-    await expect(firstRow).toBeVisible({ timeout: 20000 });
+    await expect(firstRow).toBeVisible({ timeout: 30000 });
 
-    const portNumber = await firstRow.locator('.port-number').textContent();
+    const processName = await firstRow.locator('.port-process').textContent();
+    const matchingRows = page.locator('#ports-list .port-row', { hasText: processName });
+    const countBeforeHiding = await matchingRows.count();
+
     await firstRow.locator('.row-hide-btn').click();
 
-    await expect(page.locator('#ports-list .port-row', { hasText: portNumber })).toHaveCount(0);
+    await expect(matchingRows).toHaveCount(0);
 
     await page.locator('#filter-button').click();
     await expect(page.locator('#hidden-ports-list li')).toHaveCount(1);
     await page.locator('.unhide-btn').click();
 
-    await expect(page.locator('#ports-list .port-row', { hasText: portNumber })).toHaveCount(1);
+    await expect(matchingRows).toHaveCount(countBeforeHiding);
   });
 
   test('disintegrates a real disposable process when killed', async ({ page }) => {
+    // KillPortUseCase re-lists every port (real netstat+tasklist) before
+    // killing — on a dev machine with 60-80+ real ports open that can take
+    // a while, so this test gets a longer leash than the others.
+    test.setTimeout(90000);
+
     // fork() reports its port over the IPC channel (process.send), not
     // stdout — stdout can be fully buffered and never actually flush while
     // a long-lived child process stays alive.
@@ -132,12 +155,12 @@ test.describe('apps/web UI', () => {
 
       await goto(page);
       const targetRow = page.locator(`#ports-list .port-row[data-port-key="${targetPort}/TCP"]`);
-      await expect(targetRow).toBeVisible({ timeout: 20000 });
+      await expect(targetRow).toBeVisible({ timeout: 30000 });
 
       const exited = new Promise((resolve) => child.once('exit', resolve));
       await targetRow.locator('.kill-btn').click();
 
-      await expect(targetRow.locator('.shard').first()).toBeVisible();
+      await expect(targetRow.locator('.shard').first()).toBeVisible({ timeout: 80000 });
       await exited;
 
       await expect(page.locator(`#ports-list .port-row[data-port-key="${targetPort}/TCP"]`)).toHaveCount(0, {

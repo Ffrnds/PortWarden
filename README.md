@@ -1,4 +1,4 @@
-# PortWarden
+# PortPulse
 
 Widget desktop (Electron) + API (Express, arquitetura hexagonal) que lista e encerra
 processos usando portas no Windows. Detalhes de arquitetura em [ARCHITECTURE.md](ARCHITECTURE.md).
