@@ -18,8 +18,9 @@ function createPlaceholderIcon() {
   return nativeImage.createFromBuffer(buffer, { width: size, height: size });
 }
 
-function createTray(mainWindow, { onQuit }) {
-  const tray = new Tray(createPlaceholderIcon());
+function createTray(mainWindow, { onQuit, iconPath } = {}) {
+  const icon = iconPath ? nativeImage.createFromPath(iconPath) : createPlaceholderIcon();
+  const tray = new Tray(icon.isEmpty() ? createPlaceholderIcon() : icon);
   tray.setToolTip('PortPulse');
 
   const toggleWindow = () => {
