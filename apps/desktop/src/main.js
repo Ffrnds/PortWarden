@@ -35,14 +35,16 @@ let tray = null;
 let isQuitting = false;
 
 async function startEmbeddedApi() {
-  const { app: expressApp, close: closeCompositionRoot } = createApp();
+  const { app: expressApp, close: closeCompositionRoot, adminAccessKey, attachWebSocket } = createApp();
 
   const httpServer = await new Promise((resolve) => {
     const server = expressApp.listen(0, '127.0.0.1', () => resolve(server));
   });
+  attachWebSocket(httpServer);
 
   return {
     port: httpServer.address().port,
+    adminAccessKey,
     stop() {
       httpServer.close();
       closeCompositionRoot();
@@ -110,7 +112,9 @@ async function createMainWindow() {
     },
   });
 
-  mainWindow.loadURL(`http://127.0.0.1:${webHandle.port}/index.html?apiPort=${apiHandle.port}`);
+  mainWindow.loadURL(
+    `http://127.0.0.1:${webHandle.port}/index.html?apiPort=${apiHandle.port}&accessKey=${apiHandle.adminAccessKey}`
+  );
 
   // Clicking the X hides the window instead of closing the app — the tray
   // icon is what keeps Port Manager (and its embedded API) running.

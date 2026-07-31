@@ -20,10 +20,12 @@ test.describe('apps/web UI', () => {
   let closeCompositionRoot;
   let apiPort;
   let webPort;
+  let accessKey;
 
   test.beforeAll(async () => {
-    const { app, close, attachWebSocket } = createApp({ databasePath: ':memory:' });
+    const { app, close, attachWebSocket, adminAccessKey } = createApp({ databasePath: ':memory:' });
     closeCompositionRoot = close;
+    accessKey = adminAccessKey;
     apiServer = await new Promise((resolve) => {
       const httpServer = app.listen(0, '127.0.0.1', () => resolve(httpServer));
     });
@@ -45,7 +47,7 @@ test.describe('apps/web UI', () => {
   });
 
   function goto(page) {
-    return page.goto(`http://127.0.0.1:${webPort}/index.html?apiPort=${apiPort}`);
+    return page.goto(`http://127.0.0.1:${webPort}/index.html?apiPort=${apiPort}&accessKey=${accessKey}`);
   }
 
   test.beforeEach(async ({ page }) => {

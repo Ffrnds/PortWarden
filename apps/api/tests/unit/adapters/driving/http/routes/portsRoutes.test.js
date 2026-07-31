@@ -1,5 +1,6 @@
 const express = require('express');
 const request = require('supertest');
+const jwt = require('jsonwebtoken');
 const { createPortsRouter } = require('../../../../../../src/adapters/driving/http/routes/portsRoutes');
 const { createErrorHandler } = require('../../../../../../src/adapters/driving/http/errorHandler');
 const { PortUsage } = require('../../../../../../src/domain/entities/PortUsage');
@@ -10,6 +11,9 @@ const { ProcessId } = require('../../../../../../src/domain/value-objects/Proces
 const { ProcessTerminatedEvent } = require('../../../../../../src/domain/events/ProcessTerminatedEvent');
 const { ProtectedPortError } = require('../../../../../../src/domain/exceptions/ProtectedPortError');
 const { InsufficientPrivilegeError } = require('../../../../../../src/domain/exceptions/InsufficientPrivilegeError');
+
+const TEST_JWT_SECRET = 'test-secret';
+const validAuthHeader = `Bearer ${jwt.sign({ sub: 'admin' }, TEST_JWT_SECRET)}`;
 
 function buildUsage(port = 8080) {
   return new PortUsage({
@@ -31,6 +35,7 @@ function buildApp(overrides = {}) {
     listOutboundConnectionsUseCase: { execute: async () => [] },
     detectSuspiciousActivityUseCase: { execute: async () => [] },
     metrics: { recordTermination: () => {} },
+    jwtSecret: TEST_JWT_SECRET,
     ...overrides,
   };
 
@@ -60,7 +65,7 @@ describe('DELETE /api/ports/:port', () => {
   it('kills the process and returns the terminated event', async () => {
     const app = buildApp();
 
-    const response = await request(app).delete('/api/ports/8080');
+    const response = await request(app).delete('/api/ports/8080').set('Authorization', validAuthHeader);
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
@@ -77,7 +82,7 @@ describe('DELETE /api/ports/:port', () => {
     let recorded = 0;
     const app = buildApp({ metrics: { recordTermination: () => { recorded += 1; } } });
 
-    await request(app).delete('/api/ports/8080');
+    await request(app).delete('/api/ports/8080').set('Authorization', validAuthHeader);
 
     expect(recorded).toBe(1);
   });
@@ -93,7 +98,7 @@ describe('DELETE /api/ports/:port', () => {
       },
     });
 
-    await request(app).delete('/api/ports/8080');
+    await request(app).delete('/api/ports/8080').set('Authorization', validAuthHeader);
 
     expect(receivedRequest.protocol.value).toBe('TCP');
   });
@@ -101,7 +106,7 @@ describe('DELETE /api/ports/:port', () => {
   it('rejects a non-numeric port with 400', async () => {
     const app = buildApp();
 
-    const response = await request(app).delete('/api/ports/not-a-number');
+    const response = await request(app).delete('/api/ports/not-a-number').set('Authorization', validAuthHeader);
 
     expect(response.status).toBe(400);
   });
@@ -109,7 +114,7 @@ describe('DELETE /api/ports/:port', () => {
   it('rejects an out-of-range port with 400', async () => {
     const app = buildApp();
 
-    const response = await request(app).delete('/api/ports/99999');
+    const response = await request(app).delete('/api/ports/99999').set('Authorization', validAuthHeader);
 
     expect(response.status).toBe(400);
   });
@@ -123,7 +128,7 @@ describe('DELETE /api/ports/:port', () => {
       },
     });
 
-    const response = await request(app).delete('/api/ports/8080');
+    const response = await request(app).delete('/api/ports/8080').set('Authorization', validAuthHeader);
 
     expect(response.status).toBe(403);
     expect(response.body.port).toBe(8080);
@@ -138,7 +143,7 @@ describe('DELETE /api/ports/:port', () => {
       },
     });
 
-    const response = await request(app).delete('/api/ports/8080');
+    const response = await request(app).delete('/api/ports/8080').set('Authorization', validAuthHeader);
 
     expect(response.status).toBe(409);
     expect(response.body.code).toBe('INSUFFICIENT_PRIVILEGE');
@@ -153,9 +158,17 @@ describe('DELETE /api/ports/:port', () => {
       },
     });
 
-    const response = await request(app).delete('/api/ports/8080');
+    const response = await request(app).delete('/api/ports/8080').set('Authorization', validAuthHeader);
 
     expect(response.status).toBe(500);
+  });
+
+  it('rejects the request with 401 when no token is given', async () => {
+    const app = buildApp();
+
+    const response = await request(app).delete('/api/ports/8080');
+
+    expect(response.status).toBe(401);
   });
 });
 
@@ -184,7 +197,7 @@ describe('PUT /api/protection/:port', () => {
   it('protects a port and returns 204', async () => {
     const app = buildApp();
 
-    const response = await request(app).put('/api/protection/5432');
+    const response = await request(app).put('/api/protection/5432').set('Authorization', validAuthHeader);
 
     expect(response.status).toBe(204);
   });
@@ -192,9 +205,17 @@ describe('PUT /api/protection/:port', () => {
   it('rejects a non-numeric port with 400', async () => {
     const app = buildApp();
 
-    const response = await request(app).put('/api/protection/not-a-number');
+    const response = await request(app).put('/api/protection/not-a-number').set('Authorization', validAuthHeader);
 
     expect(response.status).toBe(400);
+  });
+
+  it('rejects the request with 401 when no token is given', async () => {
+    const app = buildApp();
+
+    const response = await request(app).put('/api/protection/5432');
+
+    expect(response.status).toBe(401);
   });
 });
 
@@ -202,7 +223,7 @@ describe('DELETE /api/protection/:port', () => {
   it('unprotects a port and returns 204', async () => {
     const app = buildApp();
 
-    const response = await request(app).delete('/api/protection/5432');
+    const response = await request(app).delete('/api/protection/5432').set('Authorization', validAuthHeader);
 
     expect(response.status).toBe(204);
   });
@@ -210,9 +231,17 @@ describe('DELETE /api/protection/:port', () => {
   it('rejects a non-numeric port with 400', async () => {
     const app = buildApp();
 
-    const response = await request(app).delete('/api/protection/not-a-number');
+    const response = await request(app).delete('/api/protection/not-a-number').set('Authorization', validAuthHeader);
 
     expect(response.status).toBe(400);
+  });
+
+  it('rejects the request with 401 when no token is given', async () => {
+    const app = buildApp();
+
+    const response = await request(app).delete('/api/protection/5432');
+
+    expect(response.status).toBe(401);
   });
 });
 
