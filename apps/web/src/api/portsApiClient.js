@@ -43,3 +43,9 @@ export async function listOutboundConnections(apiBaseUrl) {
   await assertOk(response, 'Não foi possível listar as conexões de saída.');
   return response.json();
 }
+
+export async function listAlerts(apiBaseUrl) {
+  const response = await fetch(`${apiBaseUrl}/alerts`);
+  await assertOk(response, 'Não foi possível verificar atividade suspeita.');
+  return response.json();
+}

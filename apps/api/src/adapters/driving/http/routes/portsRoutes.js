@@ -6,6 +6,7 @@ const { createProtectPortController } = require('../controllers/createProtectPor
 const { createUnprotectPortController } = require('../controllers/createUnprotectPortController');
 const { createListProtectedPortsController } = require('../controllers/createListProtectedPortsController');
 const { createListOutboundConnectionsController } = require('../controllers/createListOutboundConnectionsController');
+const { createListAlertsController } = require('../controllers/createListAlertsController');
 const { createKillRateLimiter } = require('../createRateLimiters');
 
 function createPortsRouter({
@@ -16,6 +17,7 @@ function createPortsRouter({
   unprotectPortUseCase,
   listProtectedPortsUseCase,
   listOutboundConnectionsUseCase,
+  detectSuspiciousActivityUseCase,
   metrics,
 }) {
   const router = Router();
@@ -27,6 +29,7 @@ function createPortsRouter({
   router.delete('/protection/:port', createUnprotectPortController(unprotectPortUseCase));
   router.get('/protection', createListProtectedPortsController(listProtectedPortsUseCase));
   router.get('/connections', createListOutboundConnectionsController(listOutboundConnectionsUseCase));
+  router.get('/alerts', createListAlertsController(detectSuspiciousActivityUseCase));
 
   return router;
 }

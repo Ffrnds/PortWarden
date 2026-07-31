@@ -29,6 +29,7 @@ function buildApp(overrides = {}) {
     unprotectPortUseCase: { execute: async () => {} },
     listProtectedPortsUseCase: { execute: async () => [] },
     listOutboundConnectionsUseCase: { execute: async () => [] },
+    detectSuspiciousActivityUseCase: { execute: async () => [] },
     metrics: { recordTermination: () => {} },
     ...overrides,
   };
@@ -256,6 +257,31 @@ describe('GET /api/connections', () => {
         executablePath: null,
         remoteCountry: null,
         remoteCity: null,
+      },
+    ]);
+  });
+});
+
+describe('GET /api/alerts', () => {
+  it('returns the mapped list of alerts', async () => {
+    const usage = buildUsage(31337);
+    const app = buildApp({
+      detectSuspiciousActivityUseCase: {
+        execute: async () => [{ subject: usage, kind: 'listening', reasons: ['suspicious'] }],
+      },
+    });
+
+    const response = await request(app).get('/api/alerts');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual([
+      {
+        type: 'listening',
+        port: 31337,
+        protocol: 'TCP',
+        pid: 1234,
+        processName: 'node.exe',
+        reasons: ['suspicious'],
       },
     ]);
   });

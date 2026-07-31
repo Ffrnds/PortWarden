@@ -7,6 +7,7 @@ const { NodeProcessTerminatorAdapter } = require('../adapters/driven/process/Nod
 const { SqlitePortHistoryRepositoryAdapter } = require('../adapters/driven/persistence/SqlitePortHistoryRepositoryAdapter');
 const { SqlitePortProtectionRepositoryAdapter } = require('../adapters/driven/persistence/SqlitePortProtectionRepositoryAdapter');
 const { InMemoryObservabilityGateway } = require('../adapters/driven/gateways/InMemoryObservabilityGateway');
+const { WindowsNotifierAdapter } = require('../adapters/driven/notification/WindowsNotifierAdapter');
 
 const { ListPortsUseCase } = require('../application/use-cases/ListPortsUseCase');
 const { KillPortUseCase } = require('../application/use-cases/KillPortUseCase');
@@ -15,6 +16,7 @@ const { ProtectPortUseCase } = require('../application/use-cases/ProtectPortUseC
 const { UnprotectPortUseCase } = require('../application/use-cases/UnprotectPortUseCase');
 const { ListProtectedPortsUseCase } = require('../application/use-cases/ListProtectedPortsUseCase');
 const { ListOutboundConnectionsUseCase } = require('../application/use-cases/ListOutboundConnectionsUseCase');
+const { DetectSuspiciousActivityUseCase } = require('../application/use-cases/DetectSuspiciousActivityUseCase');
 
 // The single place in the whole codebase that knows about concrete adapters.
 // Everywhere else only ever sees Ports. Accepts a config override so tests
@@ -27,6 +29,7 @@ function buildCompositionRoot(config = env) {
   const portHistoryRepository = new SqlitePortHistoryRepositoryAdapter(config.databasePath);
   const portProtectionRepository = new SqlitePortProtectionRepositoryAdapter(config.databasePath);
   const observabilityGateway = new InMemoryObservabilityGateway();
+  const notifier = new WindowsNotifierAdapter();
 
   return {
     listPortsUseCase: new ListPortsUseCase(portInspector),
@@ -42,6 +45,7 @@ function buildCompositionRoot(config = env) {
     unprotectPortUseCase: new UnprotectPortUseCase(portProtectionRepository),
     listProtectedPortsUseCase: new ListProtectedPortsUseCase(portProtectionRepository),
     listOutboundConnectionsUseCase: new ListOutboundConnectionsUseCase(portInspector),
+    detectSuspiciousActivityUseCase: new DetectSuspiciousActivityUseCase(portInspector, notifier),
     // Exposed directly (bypassing a use case) for the readiness health
     // check, the same pragmatic call already made for /metrics: health and
     // metrics are operational concerns about the adapters themselves, not
