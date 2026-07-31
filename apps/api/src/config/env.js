@@ -15,6 +15,10 @@ const env = {
   // explicitly only if something needs the value to survive a restart.
   jwtSecret: process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex'),
   adminAccessKey: process.env.ADMIN_ACCESS_KEY || crypto.randomBytes(16).toString('hex'),
+  // Opt-in: unset means an in-memory cache (see composition-root.js) — this
+  // app works fully without Docker/Redis running, Redis is only worth it if
+  // the cache needs to survive/be shared beyond this one process.
+  redisUrl: process.env.REDIS_URL || null,
 };
 
 module.exports = { env };

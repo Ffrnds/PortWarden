@@ -28,5 +28,16 @@ services:
       GF_AUTH_DISABLE_LOGIN_FORM: 'true'
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    container_name: port-manager-redis
+    ports:
+      # Host 6380, not the default 6379 — kept free in case something else
+      # on the machine is already using it. Set REDIS_URL=redis://localhost:6380
+      # in apps/api/.env to use it; the API works fine without it (falls
+      # back to an in-memory cache, see apps/api/src/config/env.js).
+      - '6380:6379'
+    restart: unless-stopped
+
 volumes:
   grafana-data:
