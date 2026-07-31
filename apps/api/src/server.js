@@ -11,6 +11,7 @@ const {
   createReadinessController,
 } = require('./adapters/driving/http/controllers/createHealthController');
 const { createGeneralRateLimiter } = require('./adapters/driving/http/createRateLimiters');
+const { createPortsWebSocketServer } = require('./adapters/driving/websocket/createPortsWebSocketServer');
 const { setupSwagger } = require('./adapters/driving/http/swagger/swagger');
 const { PinoLoggerAdapter } = require('./adapters/driven/logging/PinoLoggerAdapter');
 const { PromClientMetricsAdapter } = require('./adapters/driven/metrics/PromClientMetricsAdapter');
@@ -32,14 +33,23 @@ function createApp(config = env) {
   setupSwagger(app);
   app.use(createErrorHandler(logger));
 
-  return { app, close: () => useCases.close() };
+  return {
+    app,
+    close: () => useCases.close(),
+    // Needs the underlying http.Server (for the WebSocket upgrade
+    // handshake), which only exists once something calls app.listen() — so
+    // this is a function the caller invokes after that, not something
+    // createApp can wire up on its own.
+    attachWebSocket: (httpServer) => createPortsWebSocketServer(httpServer, { ...useCases, logger }),
+  };
 }
 
 if (require.main === module) {
-  const { app } = createApp();
-  app.listen(env.port, () => {
+  const { app, attachWebSocket } = createApp();
+  const httpServer = app.listen(env.port, () => {
     console.log(`Port Manager API listening on http://localhost:${env.port}`);
   });
+  attachWebSocket(httpServer);
 }
 
 module.exports = { createApp };

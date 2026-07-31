@@ -12,6 +12,7 @@ import { renderConnectionRows, formatConnectionCountLabel } from './ui/renderCon
 import { generateTwinkleSpecs, renderTwinkleField } from './ui/twinkleField.js';
 import { filterVisiblePorts } from './ui/filterPorts.js';
 import { disintegrateRow } from './ui/disintegrate.js';
+import { connectPortsSocket } from './realtime/portsSocket.js';
 import {
   getHiddenProcessNames,
   hideProcessName,
@@ -178,6 +179,47 @@ function rerenderCurrentView() {
   }
 }
 
+// While the WebSocket is open, snapshots arrive pushed from the server and
+// the polling loop below is paused — no reason to also hammer the API on a
+// timer when it's already telling us when things change. If the socket
+// drops, polling resumes automatically as a fallback (see connectPortsSocket
+// below).
+let pollTimer = null;
+let socketOpen = false;
+// A snapshot push is driven by the server's own timer, independent of
+// anything the user is doing — without this, a snapshot arriving mid-kill
+// can fully rebuild #ports-list (the port's already gone from netstat by
+// then) and rip the row out from under the disintegrate animation before a
+// single shard has had a chance to render. Manual actions that show their
+// own transient visual state hold this while they're in flight; their own
+// refresh() call at the end re-syncs from the freshest data regardless.
+let suspendSnapshots = false;
+
+function startPolling() {
+  if (pollTimer || socketOpen) {
+    return;
+  }
+  pollTimer = setInterval(refresh, 5000);
+}
+
+function stopPolling() {
+  clearInterval(pollTimer);
+  pollTimer = null;
+}
+
+function applySnapshot(snapshot) {
+  if (suspendSnapshots) {
+    return;
+  }
+
+  latestPorts = snapshot.ports;
+  latestConnections = snapshot.connections;
+  latestProtectedPorts = snapshot.protectedPorts;
+  rerenderCurrentView();
+  renderAlerts(snapshot.alerts);
+  clearError();
+}
+
 async function refresh() {
   refreshIndicator.classList.add('spinning');
   try {
@@ -213,23 +255,29 @@ function switchView(view) {
 
 async function handleKill(port, row) {
   try {
+    suspendSnapshots = true;
     await killPort(apiBaseUrl, port.port, port.protocol);
     clearError();
     await disintegrateRow(row);
     await refresh();
   } catch (error) {
     showError(error.message);
+  } finally {
+    suspendSnapshots = false;
   }
 }
 
 async function handleKillConnection(connection, row) {
   try {
+    suspendSnapshots = true;
     await killPort(apiBaseUrl, connection.localPort, connection.protocol);
     clearError();
     await disintegrateRow(row);
     await refresh();
   } catch (error) {
     showError(error.message);
+  } finally {
+    suspendSnapshots = false;
   }
 }
 
@@ -324,5 +372,17 @@ renderTwinkleField(
   window.matchMedia('(prefers-reduced-motion: reduce)').matches
 );
 
-refresh();
-setInterval(refresh, 5000);
+connectPortsSocket(apiBaseUrl, {
+  onOpen: () => {
+    socketOpen = true;
+    stopPolling();
+  },
+  onClose: () => {
+    socketOpen = false;
+    startPolling();
+  },
+  onSnapshot: applySnapshot,
+});
+
+refresh(); // immediate first paint over HTTP, before the socket necessarily connects
+startPolling(); // fallback until/unless the socket takes over (a no-op if it already has)

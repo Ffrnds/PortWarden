@@ -22,12 +22,13 @@ test.describe('apps/web UI', () => {
   let webPort;
 
   test.beforeAll(async () => {
-    const { app, close } = createApp({ databasePath: ':memory:' });
+    const { app, close, attachWebSocket } = createApp({ databasePath: ':memory:' });
     closeCompositionRoot = close;
     apiServer = await new Promise((resolve) => {
       const httpServer = app.listen(0, '127.0.0.1', () => resolve(httpServer));
     });
     apiPort = apiServer.address().port;
+    attachWebSocket(apiServer);
 
     const staticApp = express();
     staticApp.use(express.static(path.join(__dirname, '../../')));
@@ -240,5 +241,28 @@ test.describe('apps/web UI', () => {
     await expect(page.locator('#tab-ports')).toHaveClass(/active/);
     await expect(page.locator('#ports-list')).toBeVisible();
     await expect(page.locator('#connections-list')).toBeHidden();
+  });
+
+  test('receives a real-time snapshot over the WebSocket connection', async ({ page }) => {
+    const wsPromise = page.waitForEvent('websocket', { predicate: (ws) => ws.url().includes('/ws'), timeout: 15000 });
+
+    await goto(page);
+    const ws = await wsPromise;
+
+    const snapshot = await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('timed out waiting for a snapshot frame')), 15000);
+      ws.on('framereceived', ({ payload }) => {
+        const message = JSON.parse(payload);
+        if (message.type === 'snapshot') {
+          clearTimeout(timer);
+          resolve(message);
+        }
+      });
+    });
+
+    expect(Array.isArray(snapshot.ports)).toBe(true);
+    expect(Array.isArray(snapshot.connections)).toBe(true);
+    expect(Array.isArray(snapshot.protectedPorts)).toBe(true);
+    expect(Array.isArray(snapshot.alerts)).toBe(true);
   });
 });
