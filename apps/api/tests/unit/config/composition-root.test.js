@@ -1,0 +1,35 @@
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const { buildCompositionRoot } = require('../../../src/config/composition-root');
+const { ListPortsPort } = require('../../../src/domain/ports/inbound/ListPortsPort');
+const { KillPortPort } = require('../../../src/domain/ports/inbound/KillPortPort');
+const { GetPortHistoryPort } = require('../../../src/domain/ports/inbound/GetPortHistoryPort');
+const { ProtectPortPort } = require('../../../src/domain/ports/inbound/ProtectPortPort');
+const { UnprotectPortPort } = require('../../../src/domain/ports/inbound/UnprotectPortPort');
+const { ListProtectedPortsPort } = require('../../../src/domain/ports/inbound/ListProtectedPortsPort');
+const { ListOutboundConnectionsPort } = require('../../../src/domain/ports/inbound/ListOutboundConnectionsPort');
+const { DetectSuspiciousActivityPort } = require('../../../src/domain/ports/inbound/DetectSuspiciousActivityPort');
+
+describe('buildCompositionRoot', () => {
+  it('wires every use case behind its inbound port, using a throwaway database', () => {
+    const databasePath = path.join(os.tmpdir(), `port-manager-composition-${process.pid}-${Math.floor(Math.random() * 1e6)}.sqlite`);
+
+    const useCases = buildCompositionRoot({ databasePath });
+
+    try {
+      expect(useCases.listPortsUseCase).toBeInstanceOf(ListPortsPort);
+      expect(useCases.killPortUseCase).toBeInstanceOf(KillPortPort);
+      expect(useCases.getPortHistoryUseCase).toBeInstanceOf(GetPortHistoryPort);
+      expect(useCases.protectPortUseCase).toBeInstanceOf(ProtectPortPort);
+      expect(useCases.unprotectPortUseCase).toBeInstanceOf(UnprotectPortPort);
+      expect(useCases.listProtectedPortsUseCase).toBeInstanceOf(ListProtectedPortsPort);
+      expect(useCases.listOutboundConnectionsUseCase).toBeInstanceOf(ListOutboundConnectionsPort);
+      expect(useCases.detectSuspiciousActivityUseCase).toBeInstanceOf(DetectSuspiciousActivityPort);
+      expect(typeof useCases.portHistoryRepository.ping).toBe('function');
+    } finally {
+      useCases.close();
+      fs.rmSync(databasePath, { force: true });
+    }
+  });
+});

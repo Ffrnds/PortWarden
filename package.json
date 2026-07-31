@@ -1,0 +1,12 @@
+ {
+  "name": "port-manager",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "start": "npm run start --workspace=apps/desktop",
+    "generate-icon": "node scripts/generate-app-icon.js",
+    "dev": "npm run dev --workspace=apps/api",
+    "test": "npm run test --workspace=apps/api"
+  }
+}

@@ -1,0 +1,72 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const { env } = require('./env');
+
+const { WindowsPortInspectorAdapter } = require('../adapters/driven/os/WindowsPortInspectorAdapter');
+const { NodeProcessTerminatorAdapter } = require('../adapters/driven/process/NodeProcessTerminatorAdapter');
+const { SqlitePortHistoryRepositoryAdapter } = require('../adapters/driven/persistence/SqlitePortHistoryRepositoryAdapter');
+const { SqlitePortProtectionRepositoryAdapter } = require('../adapters/driven/persistence/SqlitePortProtectionRepositoryAdapter');
+const { InMemoryObservabilityGateway } = require('../adapters/driven/gateways/InMemoryObservabilityGateway');
+const { WindowsNotifierAdapter } = require('../adapters/driven/notification/WindowsNotifierAdapter');
+const { InMemoryCacheAdapter } = require('../adapters/driven/cache/InMemoryCacheAdapter');
+const { RedisCacheAdapter } = require('../adapters/driven/cache/RedisCacheAdapter');
+const { CachingPortInspectorAdapter } = require('../adapters/driven/cache/CachingPortInspectorAdapter');
+
+const { ListPortsUseCase } = require('../application/use-cases/ListPortsUseCase');
+const { KillPortUseCase } = require('../application/use-cases/KillPortUseCase');
+const { GetPortHistoryUseCase } = require('../application/use-cases/GetPortHistoryUseCase');
+const { ProtectPortUseCase } = require('../application/use-cases/ProtectPortUseCase');
+const { UnprotectPortUseCase } = require('../application/use-cases/UnprotectPortUseCase');
+const { ListProtectedPortsUseCase } = require('../application/use-cases/ListProtectedPortsUseCase');
+const { ListOutboundConnectionsUseCase } = require('../application/use-cases/ListOutboundConnectionsUseCase');
+const { DetectSuspiciousActivityUseCase } = require('../application/use-cases/DetectSuspiciousActivityUseCase');
+
+// The single place in the whole codebase that knows about concrete adapters.
+// Everywhere else only ever sees Ports. Accepts a config override so tests
+// can point at a throwaway database instead of the real one.
+function buildCompositionRoot(config = env) {
+  fs.mkdirSync(path.dirname(config.databasePath), { recursive: true });
+
+  const portInspector = new WindowsPortInspectorAdapter();
+  const processTerminator = new NodeProcessTerminatorAdapter();
+  const portHistoryRepository = new SqlitePortHistoryRepositoryAdapter(config.databasePath);
+  const portProtectionRepository = new SqlitePortProtectionRepositoryAdapter(config.databasePath);
+  const observabilityGateway = new InMemoryObservabilityGateway();
+  const notifier = new WindowsNotifierAdapter();
+  const cache = config.redisUrl ? new RedisCacheAdapter(config.redisUrl) : new InMemoryCacheAdapter();
+  // Wraps the same underlying adapter for everything that just *reads* the
+  // port/connection list — KillPortUseCase below is deliberately given the
+  // raw, uncached portInspector instead: a destructive action should always
+  // act on a fresh read.
+  const cachedPortInspector = new CachingPortInspectorAdapter(portInspector, cache);
+
+  return {
+    listPortsUseCase: new ListPortsUseCase(cachedPortInspector),
+    killPortUseCase: new KillPortUseCase({
+      portInspector,
+      processTerminator,
+      portProtectionRepository,
+      portHistoryRepository,
+      observabilityGateway,
+      invalidateCache: () => cachedPortInspector.invalidate(),
+    }),
+    getPortHistoryUseCase: new GetPortHistoryUseCase(portHistoryRepository),
+    protectPortUseCase: new ProtectPortUseCase(portProtectionRepository),
+    unprotectPortUseCase: new UnprotectPortUseCase(portProtectionRepository),
+    listProtectedPortsUseCase: new ListProtectedPortsUseCase(portProtectionRepository),
+    listOutboundConnectionsUseCase: new ListOutboundConnectionsUseCase(cachedPortInspector),
+    detectSuspiciousActivityUseCase: new DetectSuspiciousActivityUseCase(cachedPortInspector, notifier),
+    // Exposed directly (bypassing a use case) for the readiness health
+    // check, the same pragmatic call already made for /metrics: health and
+    // metrics are operational concerns about the adapters themselves, not
+    // domain behavior worth modeling as a use case.
+    portHistoryRepository,
+    close() {
+      portHistoryRepository.close();
+      portProtectionRepository.close();
+      cache.close?.();
+    },
+  };
+}
+
+module.exports = { buildCompositionRoot };

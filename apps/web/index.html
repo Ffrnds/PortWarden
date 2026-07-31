@@ -1,0 +1,62 @@
+<meta charset="utf-8" />
+<title>PortPulse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link
+  href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap"
+  rel="stylesheet"
+/>
+<link rel="stylesheet" href="styles.css" />
+<body>
+  <div class="widget">
+    <div class="widget-cosmos"></div>
+    <div class="widget-stars"></div>
+    <div class="widget-twinkle-field" id="twinkle-field"></div>
+
+    <div class="widget-content">
+      <div class="widget__header">
+        <img src="assets/logo.svg" alt="" width="26" height="26" />
+        <span class="widget__title">PORTPULSE</span>
+        <button id="search-button" class="widget__icon-btn" title="Buscar">&#128269;</button>
+        <button id="filter-button" class="widget__icon-btn" title="Filtrar portas">&#9776;</button>
+        <button id="hide-button" class="widget__icon-btn" title="Esconder">&mdash;</button>
+      </div>
+
+      <div id="search-bar" class="search-bar" hidden>
+        <input type="text" id="search-input" class="search-input" placeholder="Buscar por nome, porta, caminho, apelido..." />
+      </div>
+
+      <div id="filter-panel" class="filter-panel" hidden>
+        <label class="filter-toggle">
+          <input type="checkbox" id="hide-system-toggle" />
+          Ocultar ruído (sistema, navegadores, apps de fundo)
+        </label>
+        <div class="filter-hidden-section">
+          <div class="filter-hidden-title">Processos ocultos manualmente</div>
+          <ul id="hidden-ports-list" class="hidden-ports-list"></ul>
+          <p id="no-hidden-ports" class="empty-state">Nenhum processo oculto.</p>
+        </div>
+      </div>
+
+      <div class="view-tabs">
+        <button id="tab-ports" class="view-tab active" type="button">Portas</button>
+        <button id="tab-connections" class="view-tab" type="button">Conexões de saída</button>
+      </div>
+
+      <div id="error-banner" class="error-banner" hidden></div>
+      <div id="alert-banner" class="alert-banner" hidden></div>
+
+      <ul id="ports-list" class="widget__list"></ul>
+      <p id="empty-state" class="empty-state" hidden>Nenhuma porta ativa.</p>
+
+      <ul id="connections-list" class="widget__list" hidden></ul>
+      <p id="connections-empty-state" class="empty-state" hidden>Nenhuma conexão de saída.</p>
+
+      <div class="widget__footer">
+        <span id="port-count">0 portas ativas</span>
+        <span class="refresh" id="refresh-indicator"></span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
