@@ -52,7 +52,8 @@ const openApiSpec = {
     },
     '/api/connections': {
       get: {
-        summary: 'List established outbound connections (remote host resolved via reverse DNS, best-effort)',
+        summary:
+          'List established outbound connections (remote host via reverse DNS, remote country/city via GeoIP, both best-effort)',
         responses: { 200: { description: 'List of outbound connections' } },
       },
     },
