@@ -93,10 +93,10 @@ describe('renderConnectionRows', () => {
     expect(list.children).toHaveLength(2);
   });
 
-  it('looks up each process alias by lowercased process name', () => {
+  it('looks up each alias by local port key, not by process name', () => {
     const list = document.createElement('ul');
 
-    renderConnectionRows(list, [buildConnection()], { 'msedge.exe': 'Microsoft Edge' }, { onKill: () => {} });
+    renderConnectionRows(list, [buildConnection()], { '51234/TCP': 'Microsoft Edge' }, { onKill: () => {} });
 
     expect(list.children[0].querySelector('.port-process').textContent).toContain('Microsoft Edge');
   });

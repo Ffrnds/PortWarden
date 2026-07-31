@@ -7,6 +7,9 @@ import {
   getPortNotes,
   getPortNote,
   setPortNote,
+  getPortAliases,
+  getPortAlias,
+  setPortAlias,
 } from '../../src/ui/preferences.js';
 
 beforeEach(() => {
@@ -86,5 +89,46 @@ describe('port notes', () => {
     setPortNote('5432/TCP', 'Postgres');
 
     expect(getPortNotes()).toEqual({ '3000/TCP': 'API', '5432/TCP': 'Postgres' });
+  });
+});
+
+describe('port aliases', () => {
+  it('starts empty for any key', () => {
+    expect(getPortAliases()).toEqual({});
+    expect(getPortAlias('3000/TCP')).toBe('');
+  });
+
+  it('persists an alias keyed by port+protocol', () => {
+    setPortAlias('3000/TCP', 'Meu backend Node');
+
+    expect(getPortAlias('3000/TCP')).toBe('Meu backend Node');
+    expect(getPortAlias('5432/TCP')).toBe('');
+  });
+
+  // This is the actual bug report this test guards against: renaming one
+  // port used to rename every other port sharing the same process name,
+  // because aliases were originally keyed by process name instead of by
+  // port. Keying by port+protocol means two ports can share a process name
+  // (two node.exe instances, say) and still be renamed independently.
+  it('keeps aliases for two ports with the same process name independent', () => {
+    setPortAlias('3000/TCP', 'Backend A');
+    setPortAlias('4000/TCP', 'Backend B');
+
+    expect(getPortAlias('3000/TCP')).toBe('Backend A');
+    expect(getPortAlias('4000/TCP')).toBe('Backend B');
+  });
+
+  it('trims whitespace around the alias', () => {
+    setPortAlias('3000/TCP', '  Meu backend Node  ');
+
+    expect(getPortAlias('3000/TCP')).toBe('Meu backend Node');
+  });
+
+  it('clears the alias when set to an empty (or whitespace-only) string', () => {
+    setPortAlias('3000/TCP', 'Meu backend Node');
+    setPortAlias('3000/TCP', '   ');
+
+    expect(getPortAlias('3000/TCP')).toBe('');
+    expect(getPortAliases()).toEqual({});
   });
 });

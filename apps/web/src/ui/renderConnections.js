@@ -35,9 +35,11 @@ export function buildConnectionRow(connection, alias, { onKill }) {
   processLine.className = 'port-process';
   const displayName = alias || connection.processName;
   processLine.textContent = `${displayName} · PID ${connection.pid} · porta local ${connection.localPort}`;
-  // Aliases are edited from the Ports tab (see renderPorts.js) — this tab
-  // just reflects them, so the tooltip surfaces the real name alongside
-  // the executable path rather than offering an edit action here too.
+  // No rename button here on purpose: aliases are keyed by port+protocol
+  // (see preferences.js), and a connection's local port is an ephemeral
+  // outbound socket, not the listening port a user would have renamed on
+  // the Ports tab — the two are essentially never the same number, so
+  // there's nothing meaningful to reflect here yet.
   const tooltipParts = [];
   if (alias) {
     tooltipParts.push(connection.processName);
@@ -63,7 +65,7 @@ export function buildConnectionRow(connection, alias, { onKill }) {
 export function renderConnectionRows(listElement, connections, aliases, handlers) {
   listElement.innerHTML = '';
   connections.forEach((connection) => {
-    const alias = aliases[connection.processName.toLowerCase()] || '';
+    const alias = aliases[`${connection.localPort}/${connection.protocol}`] || '';
     listElement.appendChild(buildConnectionRow(connection, alias, handlers));
   });
 }

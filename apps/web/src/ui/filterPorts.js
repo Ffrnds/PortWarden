@@ -3,7 +3,7 @@ import { isSystemPort } from './systemPorts.js';
 function matchesSearch(port, search, resolveAlias) {
   const haystack = [
     port.processName,
-    resolveAlias(port.processName),
+    resolveAlias(port),
     port.executablePath,
     port.port,
     port.localPort,

@@ -4,7 +4,7 @@
 const HIDDEN_PROCESSES_KEY = 'portpulse:hiddenProcesses';
 const HIDE_SYSTEM_PORTS_KEY = 'portpulse:hideSystemPorts';
 const PORT_NOTES_KEY = 'portpulse:portNotes';
-const PROCESS_ALIASES_KEY = 'portpulse:processAliases';
+const PORT_ALIASES_KEY = 'portpulse:portAliases';
 
 function readJson(key, fallback) {
   try {
@@ -69,20 +69,22 @@ export function setPortNote(key, note) {
   localStorage.setItem(PORT_NOTES_KEY, JSON.stringify(notes));
 }
 
-// Aliases are keyed by process name, same reasoning as the hidden-processes
-// list: a generic executable like "helper.exe" is the same app everywhere it
-// shows up, regardless of which port it happens to be bound to this time.
-export function getProcessAliases() {
-  return readJson(PROCESS_ALIASES_KEY, {});
+// Aliases are keyed by port+protocol, same reasoning as notes above — NOT by
+// process name. That was the original design (mirroring the hidden-processes
+// list), but it meant renaming one row silently renamed every other row that
+// happened to share the same executable (several node.exe or svchost.exe
+// entries on different ports, for example), which isn't what "rename this
+// one" should do.
+export function getPortAliases() {
+  return readJson(PORT_ALIASES_KEY, {});
 }
 
-export function getProcessAlias(processName) {
-  return getProcessAliases()[processName.toLowerCase()] || '';
+export function getPortAlias(key) {
+  return getPortAliases()[key] || '';
 }
 
-export function setProcessAlias(processName, alias) {
-  const aliases = getProcessAliases();
-  const key = processName.toLowerCase();
+export function setPortAlias(key, alias) {
+  const aliases = getPortAliases();
   const trimmed = alias.trim();
 
   if (trimmed) {
@@ -91,5 +93,5 @@ export function setProcessAlias(processName, alias) {
     delete aliases[key];
   }
 
-  localStorage.setItem(PROCESS_ALIASES_KEY, JSON.stringify(aliases));
+  localStorage.setItem(PORT_ALIASES_KEY, JSON.stringify(aliases));
 }
