@@ -14,6 +14,7 @@ import { generateTwinkleSpecs, renderTwinkleField } from './ui/twinkleField.js';
 import { filterVisiblePorts } from './ui/filterPorts.js';
 import { disintegrateRow } from './ui/disintegrate.js';
 import { connectPortsSocket } from './realtime/portsSocket.js';
+import { showPromptModal } from './ui/promptModal.js';
 import {
   getHiddenProcessNames,
   hideProcessName,
@@ -52,6 +53,13 @@ const tabConnections = document.getElementById('tab-connections');
 const searchButton = document.getElementById('search-button');
 const searchBar = document.getElementById('search-bar');
 const searchInput = document.getElementById('search-input');
+const promptModalElements = {
+  overlay: document.getElementById('prompt-modal'),
+  messageEl: document.getElementById('prompt-modal-message'),
+  inputEl: document.getElementById('prompt-modal-input'),
+  okButton: document.getElementById('prompt-modal-ok'),
+  cancelButton: document.getElementById('prompt-modal-cancel'),
+};
 
 let latestPorts = [];
 let latestProtectedPorts = [];
@@ -322,9 +330,13 @@ function handleHide(port) {
   applyFiltersAndRender();
 }
 
-function handleRename(port) {
+async function handleRename(port) {
   const current = getProcessAlias(port.processName);
-  const next = window.prompt(`Apelido para "${port.processName}" (deixe em branco para remover):`, current);
+  const next = await showPromptModal(
+    promptModalElements,
+    `Apelido para "${port.processName}" (deixe em branco para remover):`,
+    current
+  );
 
   if (next === null) {
     return; // cancelled
@@ -334,13 +346,14 @@ function handleRename(port) {
   rerenderCurrentView();
 }
 
-function handleEditNote(port) {
+async function handleEditNote(port) {
   const key = portKey(port);
   const current = getPortNote(key);
-  // window.prompt is blunt, but this is a personal desktop widget, not a
-  // web app aiming for polish on every corner — a custom modal for one
-  // occasional text field isn't worth the extra UI surface right now.
-  const next = window.prompt(`Observação para a porta ${port.port} (${port.processName}):`, current);
+  const next = await showPromptModal(
+    promptModalElements,
+    `Observação para a porta ${port.port} (${port.processName}):`,
+    current
+  );
 
   if (next === null) {
     return; // cancelled
