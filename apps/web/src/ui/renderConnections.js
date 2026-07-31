@@ -20,6 +20,17 @@ export function buildConnectionRow(connection, alias, { onKill }) {
     remoteLine.title = connection.remoteAddress;
   }
 
+  info.append(remoteLine);
+
+  if (connection.remoteCountry) {
+    const geoLine = document.createElement('div');
+    geoLine.className = 'connection-geo';
+    geoLine.textContent = connection.remoteCity
+      ? `${connection.remoteCity}, ${connection.remoteCountry}`
+      : connection.remoteCountry;
+    info.append(geoLine);
+  }
+
   const processLine = document.createElement('div');
   processLine.className = 'port-process';
   const displayName = alias || connection.processName;
@@ -38,7 +49,7 @@ export function buildConnectionRow(connection, alias, { onKill }) {
     processLine.title = tooltipParts.join(' — ');
   }
 
-  info.append(remoteLine, processLine);
+  info.append(processLine);
 
   const killButton = document.createElement('button');
   killButton.className = 'kill-btn';

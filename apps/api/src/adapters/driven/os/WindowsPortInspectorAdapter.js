@@ -1,6 +1,7 @@
 const { execFile } = require('node:child_process');
 const dns = require('node:dns');
 const { promisify } = require('node:util');
+const geoip = require('geoip-lite');
 const { PortInspectorPort } = require('../../../domain/ports/outbound/PortInspectorPort');
 const { PortUsage } = require('../../../domain/entities/PortUsage');
 const { OutboundConnection } = require('../../../domain/entities/OutboundConnection');
@@ -160,7 +161,8 @@ class WindowsPortInspectorAdapter extends PortInspectorPort {
   async listOutboundConnections() {
     const [netstatOutput, processInfoByPid] = await Promise.all([this.#runNetstat(), this.#runProcessList()]);
     const connections = parseOutboundConnectionsOutput(netstatOutput, processInfoByPid);
-    return this.#resolveRemoteHosts(connections);
+    const withHosts = await this.#resolveRemoteHosts(connections);
+    return this.#resolveGeoLocations(withHosts);
   }
 
   async #runNetstat() {
@@ -203,6 +205,22 @@ class WindowsPortInspectorAdapter extends PortInspectorPort {
     );
 
     return connections.map((connection) => connection.withRemoteHost(hostByAddress.get(connection.remoteAddress) ?? null));
+  }
+
+  // GeoIP is a synchronous lookup against a small bundled database (no
+  // network I/O, unlike reverse DNS) — private/loopback/reserved addresses
+  // simply have no entry, which is expected for most LAN traffic.
+  #resolveGeoLocations(connections) {
+    return connections.map((connection) => {
+      const location = geoip.lookup(connection.remoteAddress);
+      if (!location) {
+        return connection;
+      }
+      return connection.withGeoLocation({
+        country: location.country || null,
+        city: location.city || null,
+      });
+    });
   }
 }
 

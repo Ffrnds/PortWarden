@@ -29,7 +29,16 @@ describe('OutboundConnectionMapper', () => {
       pid: 4112,
       processName: 'msedge.exe',
       executablePath: null,
+      remoteCountry: null,
+      remoteCity: null,
     });
+  });
+
+  it('maps the resolved GeoIP country and city', () => {
+    const dto = OutboundConnectionMapper.toDTO(buildConnection({ remoteCountry: 'US', remoteCity: 'Ashburn' }));
+
+    expect(dto.remoteCountry).toBe('US');
+    expect(dto.remoteCity).toBe('Ashburn');
   });
 
   it('maps a list', () => {

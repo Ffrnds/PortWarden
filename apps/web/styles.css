@@ -200,6 +200,12 @@ body {
   color: var(--cyan);
   font-size: 14px;
 }
+.connection-geo {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
 
 .search-bar {
   position: relative;

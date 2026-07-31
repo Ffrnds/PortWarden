@@ -16,6 +16,8 @@ class OutboundConnection {
   #pid;
   #processName;
   #executablePath;
+  #remoteCountry;
+  #remoteCity;
 
   constructor({
     localPort,
@@ -26,6 +28,8 @@ class OutboundConnection {
     processName,
     remoteHost = null,
     executablePath = null,
+    remoteCountry = null,
+    remoteCity = null,
   }) {
     if (!(localPort instanceof PortNumber)) {
       throw new Error('OutboundConnection requires a PortNumber instance for localPort.');
@@ -54,6 +58,8 @@ class OutboundConnection {
     this.#processName = processName;
     this.#remoteHost = remoteHost;
     this.#executablePath = executablePath;
+    this.#remoteCountry = remoteCountry;
+    this.#remoteCity = remoteCity;
     Object.freeze(this);
   }
 
@@ -89,6 +95,14 @@ class OutboundConnection {
     return this.#executablePath;
   }
 
+  get remoteCountry() {
+    return this.#remoteCountry;
+  }
+
+  get remoteCity() {
+    return this.#remoteCity;
+  }
+
   // Reverse DNS happens after the connection is built (it's a separate,
   // slower I/O step) — this hands back a new, otherwise-identical instance
   // with the resolved hostname, keeping the entity itself immutable.
@@ -101,7 +115,28 @@ class OutboundConnection {
       pid: this.#pid,
       processName: this.#processName,
       executablePath: this.#executablePath,
+      remoteCountry: this.#remoteCountry,
+      remoteCity: this.#remoteCity,
       remoteHost,
+    });
+  }
+
+  // GeoIP is a local, synchronous lookup (unlike reverse DNS), but it's
+  // still a separate enrichment step run by the adapter after the raw
+  // connection is parsed from netstat — same immutable-copy shape either
+  // way.
+  withGeoLocation({ country, city }) {
+    return new OutboundConnection({
+      localPort: this.#localPort,
+      protocol: this.#protocol,
+      remoteAddress: this.#remoteAddress,
+      remotePort: this.#remotePort,
+      pid: this.#pid,
+      processName: this.#processName,
+      executablePath: this.#executablePath,
+      remoteHost: this.#remoteHost,
+      remoteCountry: country,
+      remoteCity: city,
     });
   }
 }

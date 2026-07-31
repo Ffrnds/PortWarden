@@ -10,6 +10,8 @@ function buildConnection(overrides = {}) {
     pid: 4112,
     processName: 'msedge.exe',
     executablePath: null,
+    remoteCountry: null,
+    remoteCity: null,
     ...overrides,
   };
 }
@@ -51,6 +53,24 @@ describe('buildConnectionRow', () => {
 
     expect(row.querySelector('.port-process').textContent).toBe('Microsoft Edge · PID 4112 · porta local 51234');
     expect(row.querySelector('.port-process').title).toBe('msedge.exe');
+  });
+
+  it('does not render a geo line when the country is unknown', () => {
+    const row = buildConnectionRow(buildConnection(), '', { onKill: () => {} });
+
+    expect(row.querySelector('.connection-geo')).toBeNull();
+  });
+
+  it('shows the country alone when the city is unknown', () => {
+    const row = buildConnectionRow(buildConnection({ remoteCountry: 'US' }), '', { onKill: () => {} });
+
+    expect(row.querySelector('.connection-geo').textContent).toBe('US');
+  });
+
+  it('shows city and country together when both are known', () => {
+    const row = buildConnectionRow(buildConnection({ remoteCountry: 'US', remoteCity: 'Ashburn' }), '', { onKill: () => {} });
+
+    expect(row.querySelector('.connection-geo').textContent).toBe('Ashburn, US');
   });
 
   it('calls onKill with the connection and row when the kill button is clicked', () => {

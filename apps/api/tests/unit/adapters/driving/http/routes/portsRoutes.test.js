@@ -43,14 +43,14 @@ function buildApp(overrides = {}) {
 
 describe('GET /api/ports', () => {
   it('returns the mapped port list', async () => {
-    const app = buildApp({ listPortsUseCase: { execute: async () => [buildUsage(8080), buildUsage(3000)] } });
+    const app = buildApp({ listPortsUseCase: { execute: async () => [buildUsage(8080), buildUsage(3100)] } });
 
     const response = await request(app).get('/api/ports');
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual([
       { port: 8080, protocol: 'TCP', pid: 1234, processName: 'node.exe', executablePath: null },
-      { port: 3000, protocol: 'TCP', pid: 1234, processName: 'node.exe', executablePath: null },
+      { port: 3100, protocol: 'TCP', pid: 1234, processName: 'node.exe', executablePath: null },
     ]);
   });
 });
@@ -254,6 +254,8 @@ describe('GET /api/connections', () => {
         pid: 4112,
         processName: 'msedge.exe',
         executablePath: null,
+        remoteCountry: null,
+        remoteCity: null,
       },
     ]);
   });

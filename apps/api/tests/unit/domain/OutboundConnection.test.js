@@ -26,6 +26,8 @@ describe('OutboundConnection', () => {
     expect(connection.processName).toBe('msedge.exe');
     expect(connection.remoteHost).toBeNull();
     expect(connection.executablePath).toBeNull();
+    expect(connection.remoteCountry).toBeNull();
+    expect(connection.remoteCity).toBeNull();
   });
 
   it('rejects raw primitives instead of value objects', () => {
@@ -46,6 +48,25 @@ describe('OutboundConnection', () => {
     expect(resolved.remoteHost).toBe('lclgaa-aw-in-f14.1e100.net');
     expect(resolved.localPort).toBe(original.localPort);
     expect(resolved.remoteAddress).toBe(original.remoteAddress);
+  });
+
+  it('withGeoLocation returns a new instance with the resolved country/city, leaving the original untouched', () => {
+    const original = buildConnection();
+    const resolved = original.withGeoLocation({ country: 'US', city: 'Ashburn' });
+
+    expect(original.remoteCountry).toBeNull();
+    expect(original.remoteCity).toBeNull();
+    expect(resolved.remoteCountry).toBe('US');
+    expect(resolved.remoteCity).toBe('Ashburn');
+    expect(resolved.localPort).toBe(original.localPort);
+  });
+
+  it('withGeoLocation preserves an already-resolved remote host', () => {
+    const withHost = buildConnection().withRemoteHost('example.com');
+    const resolved = withHost.withGeoLocation({ country: 'US', city: 'Ashburn' });
+
+    expect(resolved.remoteHost).toBe('example.com');
+    expect(resolved.remoteCountry).toBe('US');
   });
 
   it('is immutable', () => {

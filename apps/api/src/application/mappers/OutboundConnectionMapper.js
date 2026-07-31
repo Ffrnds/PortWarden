@@ -11,6 +11,8 @@ class OutboundConnectionMapper {
       pid: connection.pid.value,
       processName: connection.processName,
       executablePath: connection.executablePath,
+      remoteCountry: connection.remoteCountry,
+      remoteCity: connection.remoteCity,
     });
   }
 

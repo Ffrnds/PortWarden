@@ -2,6 +2,7 @@ const { execFile } = require('node:child_process');
 const dns = require('node:dns');
 const fs = require('node:fs/promises');
 const { promisify } = require('node:util');
+const geoip = require('geoip-lite');
 const { PortInspectorPort } = require('../../../domain/ports/outbound/PortInspectorPort');
 const { PortUsage } = require('../../../domain/entities/PortUsage');
 const { OutboundConnection } = require('../../../domain/entities/OutboundConnection');
@@ -121,7 +122,8 @@ class UnixPortInspectorAdapter extends PortInspectorPort {
   async listOutboundConnections() {
     const { stdout } = await execFileAsync('ss', ['-tnp']);
     const connections = parseSsOutboundOutput(stdout);
-    return this.#resolveRemoteHosts(connections);
+    const withHosts = await this.#resolveRemoteHosts(connections);
+    return this.#resolveGeoLocations(withHosts);
   }
 
   // /proc/<pid>/exe is a symlink to the executable — readable on Linux
@@ -173,6 +175,19 @@ class UnixPortInspectorAdapter extends PortInspectorPort {
     );
 
     return connections.map((connection) => connection.withRemoteHost(hostByAddress.get(connection.remoteAddress) ?? null));
+  }
+
+  #resolveGeoLocations(connections) {
+    return connections.map((connection) => {
+      const location = geoip.lookup(connection.remoteAddress);
+      if (!location) {
+        return connection;
+      }
+      return connection.withGeoLocation({
+        country: location.country || null,
+        city: location.city || null,
+      });
+    });
   }
 }
 

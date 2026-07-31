@@ -48,9 +48,13 @@ describe('WindowsPortInspectorAdapter (integration)', () => {
       expect(connection).toBeDefined();
       expect(connection.remoteAddress).toBe('127.0.0.1');
       expect(connection.pid.value).toBe(process.pid);
-      // Loopback addresses rarely have a useful PTR record — this just
-      // proves the field exists and doesn't blow up, not that it resolves.
+      // Loopback addresses rarely have a useful PTR record, and are never
+      // in the GeoIP database (they're not routable) — these assertions
+      // just prove the fields exist and don't blow up, not that they
+      // resolve to anything.
       expect(connection).toHaveProperty('remoteHost');
+      expect(connection.remoteCountry).toBeNull();
+      expect(connection.remoteCity).toBeNull();
     } finally {
       client.destroy();
       await new Promise((resolve) => server.close(resolve));
