@@ -5,6 +5,7 @@ import {
   protectPort,
   unprotectPort,
   listOutboundConnections,
+  listAlerts,
 } from './api/portsApiClient.js';
 import { renderPortRows, formatPortCountLabel, portKey } from './ui/renderPorts.js';
 import { renderConnectionRows, formatConnectionCountLabel } from './ui/renderConnections.js';
@@ -33,6 +34,7 @@ const emptyState = document.getElementById('empty-state');
 const connectionsListElement = document.getElementById('connections-list');
 const connectionsEmptyState = document.getElementById('connections-empty-state');
 const errorBanner = document.getElementById('error-banner');
+const alertBanner = document.getElementById('alert-banner');
 const portCountElement = document.getElementById('port-count');
 const refreshIndicator = document.getElementById('refresh-indicator');
 const hideButton = document.getElementById('hide-button');
@@ -61,6 +63,29 @@ function showError(message) {
 function clearError() {
   errorBanner.hidden = true;
   errorBanner.textContent = '';
+}
+
+function renderAlerts(alerts) {
+  if (alerts.length === 0) {
+    alertBanner.hidden = true;
+    return;
+  }
+
+  alertBanner.hidden = false;
+  alertBanner.textContent =
+    alerts.length === 1 ? '⚠ 1 alerta de atividade suspeita' : `⚠ ${alerts.length} alertas de atividade suspeita`;
+  alertBanner.title = alerts.map((alert) => alert.reasons.join(' ')).join('\n');
+}
+
+// Best-effort and non-blocking: this is a "nice to notice" heuristic check,
+// not core functionality — a failure here should never surface the main
+// error banner or interrupt the ports/connections refresh.
+async function refreshAlerts() {
+  try {
+    renderAlerts(await listAlerts(apiBaseUrl));
+  } catch {
+    // Swallowed on purpose.
+  }
 }
 
 function renderHiddenProcessesList() {
@@ -161,6 +186,7 @@ async function refresh() {
     } else {
       await refreshConnections();
     }
+    await refreshAlerts();
     clearError();
   } catch (error) {
     showError(error.message);

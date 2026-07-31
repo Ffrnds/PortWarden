@@ -9,6 +9,7 @@ const { ProtectPortPort } = require('../../../src/domain/ports/inbound/ProtectPo
 const { UnprotectPortPort } = require('../../../src/domain/ports/inbound/UnprotectPortPort');
 const { ListProtectedPortsPort } = require('../../../src/domain/ports/inbound/ListProtectedPortsPort');
 const { ListOutboundConnectionsPort } = require('../../../src/domain/ports/inbound/ListOutboundConnectionsPort');
+const { DetectSuspiciousActivityPort } = require('../../../src/domain/ports/inbound/DetectSuspiciousActivityPort');
 
 describe('buildCompositionRoot', () => {
   it('wires every use case behind its inbound port, using a throwaway database', () => {
@@ -24,6 +25,7 @@ describe('buildCompositionRoot', () => {
       expect(useCases.unprotectPortUseCase).toBeInstanceOf(UnprotectPortPort);
       expect(useCases.listProtectedPortsUseCase).toBeInstanceOf(ListProtectedPortsPort);
       expect(useCases.listOutboundConnectionsUseCase).toBeInstanceOf(ListOutboundConnectionsPort);
+      expect(useCases.detectSuspiciousActivityUseCase).toBeInstanceOf(DetectSuspiciousActivityPort);
       expect(typeof useCases.portHistoryRepository.ping).toBe('function');
     } finally {
       useCases.close();

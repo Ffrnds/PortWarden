@@ -75,6 +75,12 @@ const openApiSpec = {
         responses: { 200: { description: 'Ready to serve requests' }, 503: { description: 'A dependency is unreachable' } },
       },
     },
+    '/api/alerts': {
+      get: {
+        summary: 'List ports/connections matching known suspicious-port heuristics (basic pattern matching, not a threat feed)',
+        responses: { 200: { description: 'List of alerts' } },
+      },
+    },
   },
 };
 

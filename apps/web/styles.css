@@ -483,6 +483,17 @@ body {
   font-size: 12px;
 }
 
+.alert-banner {
+  margin: 8px 16px 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 181, 69, 0.12);
+  border: 1px solid rgba(255, 181, 69, 0.4);
+  color: var(--amber);
+  font-size: 12px;
+  cursor: default;
+}
+
 .widget__footer {
   display: flex;
   align-items: center;
