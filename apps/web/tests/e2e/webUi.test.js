@@ -89,10 +89,30 @@ test.describe('apps/web UI', () => {
     const firstRow = page.locator('#ports-list .port-row').first();
     await expect(firstRow).toBeVisible({ timeout: 31000 });
 
-    page.once('dialog', (dialog) => dialog.accept('Meu backend Node'));
+    // The real desktop app uses an in-page modal instead of window.prompt()
+    // — Electron's BrowserWindow doesn't reliably support window.prompt(),
+    // unlike alert()/confirm(), so this exercises the actual DOM the real
+    // app renders rather than the browser's native dialog.
     await firstRow.locator('.port-info').click();
+    await expect(page.locator('#prompt-modal')).toBeVisible();
+    await page.locator('#prompt-modal-input').fill('Meu backend Node');
+    await page.locator('#prompt-modal-ok').click();
 
     await expect(firstRow.locator('.port-note')).toHaveText('Meu backend Node');
+  });
+
+  test('cancelling the note modal leaves the port unchanged', async ({ page }) => {
+    await goto(page);
+    const firstRow = page.locator('#ports-list .port-row').first();
+    await expect(firstRow).toBeVisible({ timeout: 31000 });
+
+    await firstRow.locator('.port-info').click();
+    await expect(page.locator('#prompt-modal')).toBeVisible();
+    await page.locator('#prompt-modal-input').fill('não deveria salvar');
+    await page.locator('#prompt-modal-cancel').click();
+
+    await expect(page.locator('#prompt-modal')).toBeHidden();
+    await expect(firstRow.locator('.port-note')).toHaveCount(0);
   });
 
   test('shows an error banner when the API is unreachable', async ({ page }) => {
@@ -221,8 +241,10 @@ test.describe('apps/web UI', () => {
     const firstRow = page.locator('#ports-list .port-row').first();
     await expect(firstRow).toBeVisible({ timeout: 31000 });
 
-    page.once('dialog', (dialog) => dialog.accept('Meu Apelido'));
     await firstRow.locator('.row-rename-btn').click();
+    await expect(page.locator('#prompt-modal')).toBeVisible();
+    await page.locator('#prompt-modal-input').fill('Meu Apelido');
+    await page.locator('#prompt-modal-ok').click();
 
     await expect(firstRow.locator('.port-process')).toContainText('Meu Apelido');
   });

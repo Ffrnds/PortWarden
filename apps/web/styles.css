@@ -519,6 +519,86 @@ body {
   }
 }
 
+.prompt-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 6, 13, 0.75);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+/* `display: flex` above beats the UA stylesheet's `[hidden] { display: none }`
+   (author CSS wins over the browser default), so the overlay would stay
+   flex-displayed — and keep intercepting clicks across the whole page —
+   even while `hidden`, unless this is spelled out explicitly. */
+.prompt-modal-overlay[hidden] {
+  display: none;
+}
+.prompt-modal {
+  width: calc(100% - 48px);
+  max-width: 280px;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--void-2);
+  border: 1px solid rgba(53, 242, 255, 0.3);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+.prompt-modal-message {
+  font-size: 12px;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.prompt-modal-input {
+  width: 100%;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+}
+.prompt-modal-input:focus {
+  outline: none;
+  border-color: var(--cyan);
+}
+.prompt-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.prompt-modal-btn {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.prompt-modal-btn-cancel {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: var(--muted);
+}
+.prompt-modal-btn-cancel:hover {
+  color: var(--text);
+}
+.prompt-modal-btn-ok {
+  border: 1px solid var(--cyan);
+  background: transparent;
+  color: var(--cyan);
+}
+.prompt-modal-btn-ok:hover {
+  background: var(--cyan);
+  color: #05060d;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .port-dot,
   .widget-twinkle,
