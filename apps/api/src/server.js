@@ -12,6 +12,7 @@ const {
 } = require('./adapters/driving/http/controllers/createHealthController');
 const { createGeneralRateLimiter } = require('./adapters/driving/http/createRateLimiters');
 const { createPortsWebSocketServer } = require('./adapters/driving/websocket/createPortsWebSocketServer');
+const { createLoginController } = require('./adapters/driving/http/auth/createLoginController');
 const { setupSwagger } = require('./adapters/driving/http/swagger/swagger');
 const { PinoLoggerAdapter } = require('./adapters/driven/logging/PinoLoggerAdapter');
 const { PromClientMetricsAdapter } = require('./adapters/driven/metrics/PromClientMetricsAdapter');
@@ -20,13 +21,21 @@ function createApp(config = env) {
   const useCases = buildCompositionRoot(config);
   const logger = new PinoLoggerAdapter();
   const metrics = new PromClientMetricsAdapter();
+  // Falls back to the shared env module rather than requiring every caller
+  // to pass these explicitly — tests that only override e.g. databasePath
+  // (a partial config object replaces env.js's defaults entirely, since
+  // this is a plain default parameter, not a merge) still get a real,
+  // consistent secret/key instead of undefined.
+  const jwtSecret = config.jwtSecret || env.jwtSecret;
+  const adminAccessKey = config.adminAccessKey || env.adminAccessKey;
 
   const app = express();
   app.use(cors());
   app.use(express.json());
   app.use(createRequestLogger(logger, metrics));
   app.use('/api', createGeneralRateLimiter());
-  app.use('/api', createPortsRouter({ ...useCases, metrics }));
+  app.post('/api/auth/login', createLoginController({ adminAccessKey, jwtSecret }));
+  app.use('/api', createPortsRouter({ ...useCases, metrics, jwtSecret }));
   app.get('/metrics', createMetricsController(metrics));
   app.get('/health/live', createLivenessController());
   app.get('/health/ready', createReadinessController({ portHistoryRepository: useCases.portHistoryRepository }));
@@ -36,6 +45,7 @@ function createApp(config = env) {
   return {
     app,
     close: () => useCases.close(),
+    adminAccessKey,
     // Needs the underlying http.Server (for the WebSocket upgrade
     // handshake), which only exists once something calls app.listen() — so
     // this is a function the caller invokes after that, not something

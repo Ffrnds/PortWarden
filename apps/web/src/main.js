@@ -1,4 +1,5 @@
 import {
+  login,
   listPorts,
   listProtectedPorts,
   killPort,
@@ -27,7 +28,9 @@ import {
   getProcessAliases,
 } from './ui/preferences.js';
 
-const apiPort = new URLSearchParams(location.search).get('apiPort');
+const urlParams = new URLSearchParams(location.search);
+const apiPort = urlParams.get('apiPort');
+const accessKey = urlParams.get('accessKey');
 const apiBaseUrl = `http://127.0.0.1:${apiPort}/api`;
 
 const portsListElement = document.getElementById('ports-list');
@@ -55,6 +58,18 @@ let latestProtectedPorts = [];
 let latestConnections = [];
 let currentView = 'ports'; // 'ports' | 'connections'
 let searchText = '';
+// Only kill/protect/unprotect need this (see createAuthGuard.js on the API
+// side) — listing ports/connections/history stays open, so a failed login
+// shouldn't stop the widget from showing anything, just from mutating.
+let authToken = null;
+
+async function authenticate() {
+  try {
+    authToken = await login(apiBaseUrl, accessKey);
+  } catch (error) {
+    showError(error.message);
+  }
+}
 
 function showError(message) {
   errorBanner.textContent = message;
@@ -256,7 +271,7 @@ function switchView(view) {
 async function handleKill(port, row) {
   try {
     suspendSnapshots = true;
-    await killPort(apiBaseUrl, port.port, port.protocol);
+    await killPort(apiBaseUrl, port.port, port.protocol, authToken);
     clearError();
     await disintegrateRow(row);
     await refresh();
@@ -270,7 +285,7 @@ async function handleKill(port, row) {
 async function handleKillConnection(connection, row) {
   try {
     suspendSnapshots = true;
-    await killPort(apiBaseUrl, connection.localPort, connection.protocol);
+    await killPort(apiBaseUrl, connection.localPort, connection.protocol, authToken);
     clearError();
     await disintegrateRow(row);
     await refresh();
@@ -283,7 +298,7 @@ async function handleKillConnection(connection, row) {
 
 async function handleProtect(port) {
   try {
-    await protectPort(apiBaseUrl, port);
+    await protectPort(apiBaseUrl, port, authToken);
     clearError();
     await refresh();
   } catch (error) {
@@ -293,7 +308,7 @@ async function handleProtect(port) {
 
 async function handleUnprotect(port) {
   try {
-    await unprotectPort(apiBaseUrl, port);
+    await unprotectPort(apiBaseUrl, port, authToken);
     clearError();
     await refresh();
   } catch (error) {
@@ -384,5 +399,5 @@ connectPortsSocket(apiBaseUrl, {
   onSnapshot: applySnapshot,
 });
 
-refresh(); // immediate first paint over HTTP, before the socket necessarily connects
+authenticate().then(refresh); // immediate first paint over HTTP, before the socket necessarily connects
 startPolling(); // fallback until/unless the socket takes over (a no-op if it already has)

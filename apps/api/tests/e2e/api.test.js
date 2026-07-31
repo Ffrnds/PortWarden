@@ -12,7 +12,11 @@ const { createApp } = require('../../src/server');
 describe('Port Manager API (e2e)', () => {
   it('lists a real listener, kills it through the API, and records it in history', async () => {
     const databasePath = path.join(os.tmpdir(), `port-manager-e2e-${process.pid}-${Math.floor(Math.random() * 1e6)}.sqlite`);
-    const { app, close } = createApp({ databasePath });
+    const { app, close, adminAccessKey } = createApp({ databasePath });
+
+    const loginResponse = await request(app).post('/api/auth/login').send({ accessKey: adminAccessKey });
+    expect(loginResponse.status).toBe(200);
+    const authHeader = `Bearer ${loginResponse.body.token}`;
 
     const child = spawn(process.execPath, [
       '-e',
@@ -38,7 +42,7 @@ describe('Port Manager API (e2e)', () => {
       expect(listResponse.body.some((usage) => usage.port === port && usage.pid === child.pid)).toBe(true);
 
       const exited = new Promise((resolve) => child.once('exit', resolve));
-      const killResponse = await request(app).delete(`/api/ports/${port}`);
+      const killResponse = await request(app).delete(`/api/ports/${port}`).set('Authorization', authHeader);
       expect(killResponse.status).toBe(200);
       expect(killResponse.body.pid).toBe(child.pid);
       await exited;
