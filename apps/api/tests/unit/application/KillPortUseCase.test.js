@@ -94,6 +94,7 @@ function buildUseCase(overrides = {}) {
     portProtectionRepository: overrides.portProtectionRepository ?? new FakePortProtectionRepositoryAdapter(),
     portHistoryRepository: overrides.portHistoryRepository ?? new FakePortHistoryRepositoryAdapter(),
     observabilityGateway: overrides.observabilityGateway ?? new FakeObservabilityGatewayAdapter(),
+    invalidateCache: overrides.invalidateCache,
   });
 }
 
@@ -163,6 +164,38 @@ describe('KillPortUseCase', () => {
     const useCase = buildUseCase({ portInspector: new FakePortInspectorAdapter([]) });
 
     await expect(useCase.execute(request)).rejects.toThrow(/No process found/);
+  });
+
+  it('calls invalidateCache after a successful kill', async () => {
+    let calls = 0;
+    const useCase = buildUseCase({ invalidateCache: () => { calls += 1; } });
+
+    await useCase.execute(request);
+
+    expect(calls).toBe(1);
+  });
+
+  it('does not call invalidateCache when the kill is rejected (protected port)', async () => {
+    let calls = 0;
+    const usage = buildPortUsage({ pid: 4 });
+    const useCase = buildUseCase({
+      portInspector: new FakePortInspectorAdapter([usage]),
+      invalidateCache: () => { calls += 1; },
+    });
+
+    await expect(useCase.execute(request)).rejects.toThrow(ProtectedPortError);
+    expect(calls).toBe(0);
+  });
+
+  it('does not call invalidateCache when the terminator throws', async () => {
+    let calls = 0;
+    const useCase = buildUseCase({
+      processTerminator: new FakeProcessTerminatorAdapter({ throws: new Error('boom') }),
+      invalidateCache: () => { calls += 1; },
+    });
+
+    await expect(useCase.execute(request)).rejects.toThrow('boom');
+    expect(calls).toBe(0);
   });
 
   it('propagates InsufficientPrivilegeError from the terminator without swallowing it', async () => {

@@ -17,8 +17,21 @@ class KillPortUseCase extends KillPortPort {
   #portProtectionRepository;
   #portHistoryRepository;
   #observabilityGateway;
+  #invalidateCache;
 
-  constructor({ portInspector, processTerminator, portProtectionRepository, portHistoryRepository, observabilityGateway }) {
+  constructor({
+    portInspector,
+    processTerminator,
+    portProtectionRepository,
+    portHistoryRepository,
+    observabilityGateway,
+    // Optional: called after a successful kill so a cached ports/connections
+    // snapshot from just before it doesn't linger and get served back out
+    // for the rest of its TTL (see CachingPortInspectorAdapter.invalidate
+    // and composition-root.js). No-op by default — most callers (and every
+    // existing test) don't care about caching at all.
+    invalidateCache = () => {},
+  }) {
     super();
 
     if (!(portInspector instanceof PortInspectorPort)) {
@@ -42,6 +55,7 @@ class KillPortUseCase extends KillPortPort {
     this.#portProtectionRepository = portProtectionRepository;
     this.#portHistoryRepository = portHistoryRepository;
     this.#observabilityGateway = observabilityGateway;
+    this.#invalidateCache = invalidateCache;
   }
 
   async execute({ portNumber, protocol }) {
@@ -64,6 +78,7 @@ class KillPortUseCase extends KillPortPort {
     }
 
     await this.#processTerminator.terminate(usage.pid);
+    await this.#invalidateCache();
 
     const event = new ProcessTerminatedEvent(usage);
     await this.#portHistoryRepository.save(event);
