@@ -24,9 +24,9 @@ import {
   getPortNote,
   setPortNote,
   getPortNotes,
-  getProcessAlias,
-  setProcessAlias,
-  getProcessAliases,
+  getPortAlias,
+  setPortAlias,
+  getPortAliases,
 } from './ui/preferences.js';
 
 const urlParams = new URLSearchParams(location.search);
@@ -143,10 +143,10 @@ function applyFiltersAndRender(protectedPorts = latestProtectedPorts) {
     hiddenProcessNames: getHiddenProcessNames(),
     hideSystemPorts: getHideSystemPorts(),
     searchText,
-    resolveAlias: getProcessAlias,
+    resolveAlias: (port) => getPortAlias(portKey(port)),
   });
 
-  renderPortRows(portsListElement, visiblePorts, protectedPorts, getPortNotes(), getProcessAliases(), {
+  renderPortRows(portsListElement, visiblePorts, protectedPorts, getPortNotes(), getPortAliases(), {
     onKill: handleKill,
     onProtect: handleProtect,
     onUnprotect: handleUnprotect,
@@ -169,10 +169,10 @@ function renderConnectionsView(connections) {
     hiddenProcessNames: getHiddenProcessNames(),
     hideSystemPorts: getHideSystemPorts(),
     searchText,
-    resolveAlias: getProcessAlias,
+    resolveAlias: (connection) => getPortAlias(`${connection.localPort}/${connection.protocol}`),
   });
 
-  renderConnectionRows(connectionsListElement, visibleConnections, getProcessAliases(), { onKill: handleKillConnection });
+  renderConnectionRows(connectionsListElement, visibleConnections, getPortAliases(), { onKill: handleKillConnection });
 
   connectionsEmptyState.hidden = visibleConnections.length > 0;
 
@@ -331,10 +331,11 @@ function handleHide(port) {
 }
 
 async function handleRename(port) {
-  const current = getProcessAlias(port.processName);
+  const key = portKey(port);
+  const current = getPortAlias(key);
   const next = await showPromptModal(
     promptModalElements,
-    `Apelido para "${port.processName}" (deixe em branco para remover):`,
+    `Apelido para a porta ${port.port} (${port.processName}) (deixe em branco para remover):`,
     current
   );
 
@@ -342,7 +343,7 @@ async function handleRename(port) {
     return; // cancelled
   }
 
-  setProcessAlias(port.processName, next);
+  setPortAlias(key, next);
   rerenderCurrentView();
 }
 

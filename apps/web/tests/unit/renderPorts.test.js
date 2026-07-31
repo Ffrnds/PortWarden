@@ -177,13 +177,27 @@ describe('renderPortRows', () => {
     expect(list.children[1].querySelector('.port-note').textContent).toBe('Postgres do projeto X');
   });
 
-  it('looks up each process alias by lowercased process name', () => {
+  it('looks up each alias by port key, not by process name', () => {
     const list = document.createElement('ul');
     const ports = [buildPort({ port: 8080, processName: 'helper.exe' })];
 
-    renderPortRows(list, ports, [], {}, { 'helper.exe': 'Discord Overlay' }, buildHandlers());
+    renderPortRows(list, ports, [], {}, { '8080/TCP': 'Discord Overlay' }, buildHandlers());
 
     expect(list.children[0].querySelector('.port-process').textContent).toContain('Discord Overlay');
+  });
+
+  it('does not apply an alias set for a different port, even with the same process name', () => {
+    const list = document.createElement('ul');
+    const ports = [
+      buildPort({ port: 8080, processName: 'node.exe' }),
+      buildPort({ port: 9090, processName: 'node.exe' }),
+    ];
+
+    renderPortRows(list, ports, [], {}, { '8080/TCP': 'Backend A' }, buildHandlers());
+
+    expect(list.children[0].querySelector('.port-process').textContent).toContain('Backend A');
+    expect(list.children[1].querySelector('.port-process').textContent).toContain('node.exe');
+    expect(list.children[1].querySelector('.port-process').textContent).not.toContain('Backend A');
   });
 
   it('clears previous rows before rendering new ones', () => {

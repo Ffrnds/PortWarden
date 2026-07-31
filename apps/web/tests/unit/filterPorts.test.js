@@ -83,7 +83,7 @@ describe('filterVisiblePorts', () => {
 
     const visible = filterVisiblePorts(ports, {
       searchText: 'discord overlay',
-      resolveAlias: (name) => (name === 'helper.exe' ? 'Discord Overlay' : ''),
+      resolveAlias: (port) => (port.port === 8080 ? 'Discord Overlay' : ''),
     });
 
     expect(visible.map((p) => p.port)).toEqual([8080]);

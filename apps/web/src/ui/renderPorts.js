@@ -60,7 +60,7 @@ export function buildPortRow(
 
   const renameButton = document.createElement('button');
   renameButton.className = 'row-rename-btn';
-  renameButton.title = alias ? `Renomear "${port.processName}"` : `Dar um apelido para "${port.processName}"`;
+  renameButton.title = alias ? `Renomear a porta ${port.port}` : `Dar um apelido para a porta ${port.port}`;
   renameButton.textContent = '✎';
   renameButton.addEventListener('click', () => onRename(port));
 
@@ -85,7 +85,7 @@ export function renderPortRows(listElement, ports, protectedPorts, notes, aliase
   listElement.innerHTML = '';
   ports.forEach((port) => {
     const note = notes[portKey(port)] || '';
-    const alias = aliases[port.processName.toLowerCase()] || '';
+    const alias = aliases[portKey(port)] || '';
     listElement.appendChild(buildPortRow(port, protectedSet.has(port.port), note, alias, handlers));
   });
 }
