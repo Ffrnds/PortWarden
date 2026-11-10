@@ -1,0 +1,616 @@
+:root {
+  --void: #05060d;
+  --void-2: #0d1128;
+  --cyan: #35f2ff;
+  --magenta: #ff3399;
+  --amber: #ffb545;
+  --text: #eef1fb;
+  --muted: #7b83a3;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  /* Tells Chromium to use its dark form-control/scrollbar rendering as the
+     baseline — without this, default scrollbars and checkboxes render
+     light regardless of our own dark styling. */
+  color-scheme: dark;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: transparent;
+  font-family: 'Rajdhani', sans-serif;
+  color: var(--text);
+  overflow: hidden;
+}
+
+.widget {
+  position: relative;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(53, 242, 255, 0.28);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.widget-cosmos {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 30% 15%, var(--void-2) 0%, var(--void) 70%);
+  opacity: 0.94;
+  z-index: 0;
+}
+
+.widget-stars,
+.widget-stars::after {
+  content: '';
+  position: absolute;
+  inset: -30% -30%;
+  background-repeat: repeat;
+  background-image: radial-gradient(1.3px 1.3px at 20px 30px, #fff, transparent),
+    radial-gradient(1.1px 1.1px at 90px 90px, #cfe, transparent), radial-gradient(1.4px 1.4px at 140px 50px, #fff, transparent),
+    radial-gradient(1px 1px at 180px 140px, #bcf, transparent), radial-gradient(1.2px 1.2px at 230px 30px, #fff, transparent),
+    radial-gradient(1.3px 1.3px at 30px 170px, #fff, transparent), radial-gradient(1.1px 1.1px at 250px 190px, #cef, transparent);
+  background-size: 220px 220px;
+  opacity: 0.75;
+  z-index: 0;
+  animation: driftA 100s linear infinite;
+}
+.widget-stars::after {
+  background-position: 40px 60px;
+  opacity: 0.45;
+  animation: driftB 130s linear infinite;
+}
+@keyframes driftA {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -220px 220px;
+  }
+}
+@keyframes driftB {
+  from {
+    background-position: 40px 60px;
+  }
+  to {
+    background-position: -180px 280px;
+  }
+}
+
+.widget-twinkle-field {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.widget-twinkle {
+  position: absolute;
+  border-radius: 50%;
+  background: #fff;
+  animation-name: twinkle;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.widget-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.widget__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  -webkit-app-region: drag;
+}
+.widget__title {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.03em;
+  flex: 1;
+}
+.widget__icon-btn {
+  -webkit-app-region: no-drag;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-left: 6px;
+}
+.widget__icon-btn:hover {
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+.widget__icon-btn.active {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  background: rgba(53, 242, 255, 0.12);
+}
+
+.view-tabs {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  gap: 4px;
+  padding: 8px 16px 0;
+}
+.view-tab {
+  flex: 1;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 6px 4px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.view-tab:hover {
+  color: var(--text);
+}
+.view-tab.active {
+  color: var(--cyan);
+  border-bottom-color: var(--cyan);
+}
+
+.connection-dot {
+  background: var(--magenta);
+  box-shadow: 0 0 8px 2px rgba(255, 51, 153, 0.6);
+  cursor: default;
+}
+.connection-remote {
+  color: var(--cyan);
+  font-size: 14px;
+}
+.connection-geo {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.search-bar {
+  position: relative;
+  z-index: 2;
+  padding: 8px 16px 0;
+}
+.search-input {
+  width: 100%;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+.search-input:focus {
+  outline: none;
+  border-color: var(--cyan);
+}
+.search-input::placeholder {
+  color: var(--muted);
+}
+
+.filter-panel {
+  position: relative;
+  z-index: 2;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(5, 6, 13, 0.35);
+  font-size: 12px;
+}
+.filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--text);
+}
+.filter-hidden-section {
+  margin-top: 10px;
+}
+.filter-hidden-title {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 10px;
+  margin-bottom: 6px;
+}
+.hidden-ports-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 120px;
+  overflow-y: auto;
+}
+.hidden-port-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+  color: var(--muted);
+}
+.hidden-port-item .unhide-btn {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  border: 1px solid var(--cyan);
+  color: var(--cyan);
+  background: transparent;
+  border-radius: 999px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.hidden-port-item .unhide-btn:hover {
+  background: var(--cyan);
+  color: #05060d;
+}
+
+.widget__list {
+  list-style: none;
+  margin: 0;
+  padding: 6px 0;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Chromium/Electron ignore `color-scheme`-based auto theming for
+   scrollbars unless we say so — without this the OS/browser default
+   (light) scrollbar shows up against the dark widget. */
+.widget__list,
+.hidden-ports-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(53, 242, 255, 0.35) transparent;
+}
+.widget__list::-webkit-scrollbar,
+.hidden-ports-list::-webkit-scrollbar {
+  width: 8px;
+}
+.widget__list::-webkit-scrollbar-track,
+.hidden-ports-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.widget__list::-webkit-scrollbar-thumb,
+.hidden-ports-list::-webkit-scrollbar-thumb {
+  background-color: rgba(53, 242, 255, 0.35);
+  border-radius: 999px;
+}
+.widget__list::-webkit-scrollbar-thumb:hover,
+.hidden-ports-list::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(53, 242, 255, 0.6);
+}
+
+.port-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.port-row + .port-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.port-dot {
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 8px 2px rgba(53, 242, 255, 0.7);
+  animation: dotpulse 2.4s ease-in-out infinite;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.port-row.protected .port-dot {
+  background: var(--amber);
+  box-shadow: 0 0 8px 2px rgba(255, 181, 69, 0.7);
+}
+@keyframes dotpulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.port-info {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.port-info:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.port-number {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 15px;
+  color: var(--cyan);
+  font-weight: 700;
+}
+.port-process {
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.port-note {
+  font-size: 11px;
+  font-style: italic;
+  color: var(--cyan);
+  opacity: 0.85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row-hide-btn {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+.row-hide-btn:hover {
+  color: var(--text);
+}
+
+.row-rename-btn {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+}
+.row-rename-btn:hover {
+  color: var(--cyan);
+}
+
+.kill-btn {
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--magenta);
+  background: transparent;
+  color: var(--magenta);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  flex-shrink: 0;
+}
+.kill-btn:hover {
+  background: var(--magenta);
+  color: #1a0210;
+  box-shadow: 0 0 14px rgba(255, 51, 153, 0.55);
+}
+
+/* Disintegrate effect: the row's real content fades out while a burst of
+   small shards flies off and dissolves, instead of the row just vanishing. */
+.port-row.disintegrating > *:not(.shard) {
+  transition: opacity 0.25s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+.shard {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 1px;
+  opacity: 1;
+  animation: shard-fly 0.8s ease-out forwards;
+  pointer-events: none;
+}
+@keyframes shard-fly {
+  to {
+    transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0.2);
+    opacity: 0;
+  }
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 24px 0;
+}
+
+.error-banner {
+  margin: 8px 16px 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 51, 153, 0.12);
+  border: 1px solid rgba(255, 51, 153, 0.4);
+  color: #ffb8dc;
+  font-size: 12px;
+}
+
+.alert-banner {
+  margin: 8px 16px 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 181, 69, 0.12);
+  border: 1px solid rgba(255, 181, 69, 0.4);
+  color: var(--amber);
+  font-size: 12px;
+  cursor: default;
+}
+
+.widget__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 11px;
+  color: var(--muted);
+}
+.widget__footer .refresh {
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--muted);
+  border-radius: 50%;
+  display: inline-block;
+}
+.widget__footer .refresh.spinning {
+  animation: spin 0.6s linear;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.prompt-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 6, 13, 0.75);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+/* `display: flex` above beats the UA stylesheet's `[hidden] { display: none }`
+   (author CSS wins over the browser default), so the overlay would stay
+   flex-displayed — and keep intercepting clicks across the whole page —
+   even while `hidden`, unless this is spelled out explicitly. */
+.prompt-modal-overlay[hidden] {
+  display: none;
+}
+.prompt-modal {
+  width: calc(100% - 48px);
+  max-width: 280px;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--void-2);
+  border: 1px solid rgba(53, 242, 255, 0.3);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+.prompt-modal-message {
+  font-size: 12px;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.prompt-modal-input {
+  width: 100%;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+}
+.prompt-modal-input:focus {
+  outline: none;
+  border-color: var(--cyan);
+}
+.prompt-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.prompt-modal-btn {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.prompt-modal-btn-cancel {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: var(--muted);
+}
+.prompt-modal-btn-cancel:hover {
+  color: var(--text);
+}
+.prompt-modal-btn-ok {
+  border: 1px solid var(--cyan);
+  background: transparent;
+  color: var(--cyan);
+}
+.prompt-modal-btn-ok:hover {
+  background: var(--cyan);
+  color: #05060d;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .port-dot,
+  .widget-twinkle,
+  .widget-stars,
+  .widget-stars::after {
+    animation: none !important;
+  }
+  .widget-twinkle {
+    opacity: 0.7;
+  }
+  .port-row.falling {
+    animation: none;
+    opacity: 0;
+  }
+}

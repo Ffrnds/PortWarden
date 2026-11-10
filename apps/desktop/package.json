@@ -1,0 +1,26 @@
+{
+  "name": "desktop",
+  "productName": "PortPulse",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/main.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "start": "electron .",
+    "test": "playwright test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.0",
+    "electron": "^43.2.0",
+    "playwright": "^1.62.0"
+  }
+}
